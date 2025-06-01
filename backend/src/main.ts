@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -18,6 +19,17 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
 
   app.enableCors()
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true, // Elimina propiedades que no están en el DTO
+      forbidNonWhitelisted: true, // Lanza un error si hay propiedades no permitidas
+      transform: true, // Transforma el payload al tipo del DTO (ej. string a number)
+      transformOptions: {
+        enableImplicitConversion: true, // Permite la conversión implícita de tipos
+      },
+    }),
+  );
 
   await app.listen(process.env.PORT ?? 3000);
 }

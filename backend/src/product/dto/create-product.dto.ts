@@ -1,25 +1,42 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty } from '@nestjs/swagger';
+import {
+    IsString,
+    IsNotEmpty,
+    IsNumber,
+    IsOptional,
+    Min,
+    IsInt,
+    IsPositive,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class CreateProductDto {
     @ApiProperty({
         description: 'The name of the product',
         example: 'Amazing T-shirt',
     })
+    @IsString()
+    @IsNotEmpty()
     title: string;
 
     @ApiProperty({
-        description: 'The price of the product',
+        description: 'The description of the product',
         example: 'High quality t-shirt',
         required: false,
     })
+    @IsString()
+    @IsOptional()
     description?: string;
 
     @ApiProperty({
         description: 'The price of the product',
-        example: 999.99,
+        example: 99.99,
         type: Number,
         format: 'float',
     })
+    @IsNumber()
+    @IsPositive()
+    @Type(() => Number) // Ensure transformation from string if needed
     price: number;
 
     @ApiProperty({
@@ -27,6 +44,9 @@ export class CreateProductDto {
         example: 10,
         type: 'integer',
     })
+    @IsInt()
+    @Min(0)
+    @Type(() => Number) // Ensure transformation from string if needed
     stock: number;
 
     @ApiProperty({
@@ -34,5 +54,7 @@ export class CreateProductDto {
         example: 'image.jpg',
         required: false,
     })
+    @IsString()
+    @IsOptional()
     image?: string;
 }
