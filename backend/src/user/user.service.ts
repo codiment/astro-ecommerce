@@ -8,11 +8,11 @@ import { PrismaService } from 'src/prisma/prisma.service';
 export class UserService {
 
   constructor(private prisma: PrismaService) { }
-
+ 
   async create(createUserDto: CreateUserDto) {
     const hashedPassword = await hashPassword(createUserDto.password);
 
-    this.prisma.user.create({
+    return await this.prisma.user.create({
       data: {
         ...createUserDto,
         password: hashedPassword
@@ -33,7 +33,13 @@ export class UserService {
     })
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
+  async update(id: number, updateUserDto: UpdateUserDto) {
+
+    let data = { ...updateUserDto };
+    if (data.password) {
+      data.password = await hashPassword(data.password);
+    }
+
     return this.prisma.user.update({
       where: { id },
       data: updateUserDto
