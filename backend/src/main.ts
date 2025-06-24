@@ -8,15 +8,18 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
 
-  const config = new DocumentBuilder()
-    .setTitle('E-commerce API')
-    .setDescription('The E-commerce API description')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
+  if (process.env.NODE_ENV !== 'production') {
 
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+    const config = new DocumentBuilder()
+      .setTitle('E-commerce API')
+      .setDescription('The E-commerce API description')
+      .setVersion('1.0')
+      .addBearerAuth()
+      .build();
+
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api/docs', app, document);
+  }
 
   app.enableCors()
 
