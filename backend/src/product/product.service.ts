@@ -5,10 +5,9 @@ import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class ProductService {
+  constructor(private prisma: PrismaService) {}
 
-  constructor(private prisma: PrismaService) { }
-
-  create(data :  CreateProductDto) {
+  create(data: CreateProductDto) {
     return this.prisma.product.create({ data });
   }
 
@@ -21,7 +20,10 @@ export class ProductService {
   }
 
   update(id: number, updateProductDto: UpdateProductDto) {
-    return this.prisma.product.update({ where: { id }, data: updateProductDto });
+    return this.prisma.product.update({
+      where: { id },
+      data: updateProductDto,
+    });
   }
 
   remove(id: number) {

@@ -6,20 +6,18 @@ import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class UserService {
+  constructor(private prisma: PrismaService) {}
 
-  constructor(private prisma: PrismaService) { }
- 
   async create(createUserDto: CreateUserDto) {
     const hashedPassword = await hashPassword(createUserDto.password);
 
     return await this.prisma.user.create({
       data: {
         ...createUserDto,
-        password: hashedPassword
-      }
-    })
+        password: hashedPassword,
+      },
+    });
   }
-
 
   findAll() {
     return this.prisma.user.findMany();
@@ -28,13 +26,12 @@ export class UserService {
   findOne(id: number) {
     return this.prisma.user.findUnique({
       where: {
-        id
-      }
-    })
+        id,
+      },
+    });
   }
 
   async update(id: number, updateUserDto: UpdateUserDto) {
-
     let data = { ...updateUserDto };
     if (data.password) {
       data.password = await hashPassword(data.password);
@@ -42,23 +39,23 @@ export class UserService {
 
     return this.prisma.user.update({
       where: { id },
-      data: data
-    })
+      data: data,
+    });
   }
 
   remove(id: number) {
     return this.prisma.user.delete({
       where: {
-        id
-      }
-    })
+        id,
+      },
+    });
   }
 
   findByEmail(email: string) {
     return this.prisma.user.findUnique({
       where: {
-        email
-      }
+        email,
+      },
     });
   }
 }
