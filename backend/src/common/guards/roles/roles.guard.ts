@@ -7,6 +7,15 @@ import {
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from 'src/common/decorators/roles.decorator';
 import { Role } from 'generated/prisma';
+import { FastifyRequest } from 'fastify';
+
+interface AuthenticatedRequest extends FastifyRequest {
+  user: {
+    id: number;
+    role: Role;
+    email?: string;
+  };
+}
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -22,7 +31,7 @@ export class RolesGuard implements CanActivate {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
     const user = request.user;
 
     if (!user || !requiredRoles.includes(user.role)) {

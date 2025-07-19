@@ -10,12 +10,16 @@ import { CartModule } from './cart/cart.module';
 import { OrderModule } from './order/order.module';
 import { CacheModule as NestCacheModule } from '@nestjs/cache-manager';
 import * as redisStore from 'cache-manager-ioredis';
+import { ThrottlerModule, ThrottlerGuard, seconds } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 
 // Importar tu CacheModule propio (asegurate la ruta sea correcta)
 import { CacheModule } from './cache/cache.module';
+import { LoggerModule } from './logger/logger.module';
 
 @Module({
   imports: [
+    LoggerModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: `.env.${process.env.NODE_ENV || 'development'}`,
@@ -29,6 +33,16 @@ import { CacheModule } from './cache/cache.module';
         ttl: 0,
       }),
     }),
+
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          ttl: seconds(60),
+          limit: 10,
+        },
+      ],
+    }),
+
     PrismaModule,
     ProductModule,
     UserModule,
@@ -38,6 +52,12 @@ import { CacheModule } from './cache/cache.module';
     CacheModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}

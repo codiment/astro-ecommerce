@@ -32,7 +32,7 @@ export class UserService {
   }
 
   async update(id: number, updateUserDto: UpdateUserDto) {
-    let data = { ...updateUserDto };
+    const data = { ...updateUserDto };
     if (data.password) {
       data.password = await hashPassword(data.password);
     }
