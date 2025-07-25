@@ -16,6 +16,7 @@ import { APP_GUARD } from '@nestjs/core';
 // Importar tu CacheModule propio (asegurate la ruta sea correcta)
 import { CacheModule } from './cache/cache.module';
 import { LoggerModule } from './logger/logger.module';
+import { BullModule } from '@nestjs/bullmq';
 
 @Module({
   imports: [
@@ -38,9 +39,13 @@ import { LoggerModule } from './logger/logger.module';
       throttlers: [
         {
           ttl: seconds(60),
-          limit: 10,
+          limit: 1000,
         },
       ],
+    }),
+
+    BullModule.forRoot({
+      connection: { host: 'localhost', port: 6379 },
     }),
 
     PrismaModule,
