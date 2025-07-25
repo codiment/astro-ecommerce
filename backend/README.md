@@ -95,4 +95,7 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 
 ## License
 
+## .env.test
+export .env and use in terminal: source .env && k6 run src/order/order.stress.test.js
+
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
