@@ -6,7 +6,6 @@ import {
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { SwaggerTheme, SwaggerThemeNameEnum } from 'swagger-themes';
 import { Logger } from 'nestjs-pino';
 import cors from '@fastify/cors';
 import fastifyCompress from '@fastify/compress';
@@ -24,9 +23,6 @@ console.warn = function (...args) {
   }
   originalConsoleWarn.apply(console, args);
 };
-
-const theme = new SwaggerTheme();
-const darkCss = theme.getBuffer(SwaggerThemeNameEnum.NORD_DARK);
 
 async function bootstrap() {
   // FastifyAdapter WITHOUT logger config (handled by LoggerModule)
@@ -94,10 +90,7 @@ async function bootstrap() {
       .build();
 
     const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api/docs', app, document, {
-      explorer: true,
-      customCss: darkCss,
-    });
+    SwaggerModule.setup('api/docs', app, document);
     logger.log('📚 Swagger available at /api/docs', 'Bootstrap');
   }
 
