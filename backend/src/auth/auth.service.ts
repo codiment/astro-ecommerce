@@ -2,18 +2,23 @@ import {
   BadRequestException,
   Injectable,
   UnauthorizedException,
+  Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from 'src/user/user.service';
 import { comparePassword, hashPassword } from 'src/utils/bcrypt';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { EmailService } from 'src/email/email.service';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private userService: UserService,
     private jwtService: JwtService,
+    private emailService: EmailService,
   ) {}
 
   async register(registerDto: RegisterDto) {
@@ -34,6 +39,19 @@ export class AuthService {
       name: newUser.name,
       role: newUser.role,
     };
+
+
+    this.emailService.sendWelcomeEmail(newUser.email, newUser.name || '')
+      .then(success => {
+        if (success) {
+          this.logger.log(`Welcome email sent to ${newUser.email}`)
+        } else {
+              this.logger.warn(`Failed to send welcome email to ${newUser.email}`)
+            }
+      })
+      .catch(error => {
+        this.logger.error(`Failed to send welcome email to ${newUser.email}: ${error.message}`)
+      })
 
     return {
       message: 'User registered successfully',

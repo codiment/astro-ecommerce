@@ -3,12 +3,19 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
- 
+import { EmailService, OrderEmailData } from 'src/email/email.service';
+
 @Injectable()
 export class OrderService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(OrderService.name);
+
+  constructor(
+    private prisma: PrismaService,
+    private emailService: EmailService,
+  ) {}
 
   async createOrder(userId: number) {
     return this.prisma.$transaction(async (tx) => {
@@ -62,7 +69,12 @@ export class OrderService {
           },
         },
         include: {
-          items: true,
+          items: {
+            include: {
+              product: true,
+            },
+          },
+          user: true,
         },
       });
 
@@ -71,8 +83,42 @@ export class OrderService {
         where: { cartId: cart.id },
       });
 
+      // 6- Enviar email de confirmación (fuera de la transacción)
+      this.sendOrderConfirmationEmail(order);
+
       return order;
     });
+  }
+
+  private async sendOrderConfirmationEmail(order) {
+    try {
+      // Preparar los datos para el email
+      const emailData: OrderEmailData = {
+        customerName: order.user.name,
+        orderId: order.id,
+        orderTotal: order.total,
+        items: order.items.map(item => ({
+          title: item.product.title,
+          quantity: item.quantity,
+          price: item.price,
+        })),
+      };
+
+      // Enviar email de forma no bloqueante
+      this.emailService.sendOrderConfirmationEmail(order.user.email, emailData)
+        .then(success => {
+          if (success) {
+            this.logger.log(`Order confirmation email sent for order #${order.id}`);
+          } else {
+            this.logger.warn(`Failed to send order confirmation email for order #${order.id}`);
+          }
+        })
+        .catch(error => {
+          this.logger.error(`Error sending order confirmation email: ${error.message}`);
+        });
+    } catch (error) {
+      this.logger.error(`Error preparing order confirmation email: ${error.message}`);
+    }
   }
 
   async getUserOrders(userId: number) {
@@ -126,6 +172,7 @@ export class OrderService {
   ) {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
+      include: { user: true },
     });
 
     if (!order) {
@@ -138,9 +185,29 @@ export class OrderService {
       );
     }
 
-    return this.prisma.order.update({
+    const updatedOrder = await this.prisma.order.update({
       where: { id: orderId },
       data: { status: newStatus },
     });
+
+    // Enviar email de actualización de estado (no bloqueante)
+    this.emailService.sendOrderStatusUpdateEmail(
+      order.user.email,
+      order.user.name ?? 'Cliente',
+      orderId,
+      newStatus
+    )
+      .then(success => {
+        if (success) {
+          this.logger.log(`Order status update email sent for order #${orderId}`);
+        } else {
+          this.logger.warn(`Failed to send order status update email for order #${orderId}`);
+        }
+      })
+      .catch(error => {
+        this.logger.error(`Error sending order status update email: ${error.message}`);
+      });
+
+    return updatedOrder;
   }
 }

@@ -17,6 +17,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { CacheModule } from './cache/cache.module';
 import { LoggerModule } from './logger/logger.module';
 import { BullModule } from '@nestjs/bullmq';
+import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
@@ -55,6 +56,7 @@ import { BullModule } from '@nestjs/bullmq';
     CartModule,
     OrderModule,
     CacheModule,
+    EmailModule,
   ],
   controllers: [AppController],
   providers: [
