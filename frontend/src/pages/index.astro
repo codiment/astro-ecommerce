@@ -1,16 +1,18 @@
 ---
-
+import Layout from "../layouts/Layout.astro";
+import FeatureCards from "../features/home/components/FeatureCards.astro";
+import styles from "../styles/home.module.css";
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<Layout title="E-Commerce - Inicio">
+  <section class={styles.hero}>
+    <h1 class={styles.heroTitle}>Bienvenido a nuestro E-Commerce</h1>
+    <p class={styles.heroSubtitle}>Encuentra los mejores productos al mejor precio con envío gratis y garantía de calidad</p>
+  </section>
+
+  <section class={styles.ctaSection}>
+    <div class="container mx-auto text-center">
+      <FeatureCards />
+    </div>
+  </section>
+</Layout>

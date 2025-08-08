@@ -1,0 +1,156 @@
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.logo a {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: rgb(var(--accent));
+  text-decoration: none;
+}
+
+.navList {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 2rem;
+}
+
+.navItem {
+  position: relative;
+}
+
+.navLink {
+  color: #333;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.navLink:hover {
+  color: rgb(var(--accent));
+}
+
+.navLink:hover::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: rgb(var(--accent));
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.searchContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.searchBar {
+  padding: 0.5rem 1rem 0.5rem 2.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 1.5rem;
+  background-color: #f9fafb;
+  font-size: 0.875rem;
+  width: 250px;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.searchBar:focus {
+  background-color: white;
+  border-color: rgb(var(--accent));
+  box-shadow: 0 0 0 3px rgba(136, 58, 234, 0.1);
+  width: 300px;
+}
+
+.searchBar::placeholder {
+  color: #9ca3af;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 0.75rem;
+  color: #6b7280;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.userBtn,
+.cartBtn {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  color: #374151;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+}
+
+.userBtn:hover,
+.cartBtn:hover {
+  transform: scale(1.1);
+  background-color: #f3f4f6;
+}
+
+@media (max-width: 768px) {
+  .navbar {
+    flex-direction: column;
+    padding: 1rem;
+    gap: 1rem;
+  }
+  
+  .navList {
+    margin: 0;
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+  }
+  
+  .actions {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  .searchBar {
+    width: 200px;
+  }
+  
+  .searchBar:focus {
+    width: 220px;
+  }
+}
+
+@media (max-width: 480px) {
+  .searchBar {
+    width: 150px;
+    font-size: 0.8rem;
+  }
+  
+  .searchBar:focus {
+    width: 170px;
+  }
+  
+  .actions {
+    gap: 0.5rem;
+  }
+}
