@@ -1,0 +1,47 @@
+---
+import { Truck, Shield, Star } from '@lucide/astro';
+import styles from '../../../styles/featureCards.module.css';
+
+const features = [
+  {
+    icon: Truck,
+    title: "Envío Gratis",
+    description: "Envío gratuito en compras superiores a $50.000",
+    badge: "Gratis"
+  },
+  {
+    icon: Shield,
+    title: "Compra Segura",
+    description: "Tus datos están protegidos con encriptación SSL",
+    badge: "Seguro"
+  },
+  {
+    icon: Star,
+    title: "Calidad Garantizada",
+    description: "Productos de la más alta calidad con garantía incluida",
+    badge: "Garantía"
+  }
+];
+---
+
+<div class={styles.container}>
+  {features.map((feature) => {
+    const IconComponent = feature.icon;
+    return (
+      <div class={styles.card}>
+        <div class={styles.cardHeader}>
+          <div class={styles.iconContainer}>
+            <IconComponent size={48} />
+          </div>
+          <div class={styles.titleRow}>
+            <h3 class={styles.title}>{feature.title}</h3>
+            <span class={styles.badge}>{feature.badge}</span>
+          </div>
+        </div>
+        <div class={styles.cardContent}>
+          <p class={styles.description}>{feature.description}</p>
+        </div>
+      </div>
+    );
+  })}
+</div>

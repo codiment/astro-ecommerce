@@ -1,0 +1,19 @@
+---
+import Layout from "../layouts/Layout.astro";
+import ProductShowcase from "../features/products/components/ProductShowcase.astro";
+import styles from "../styles/products.module.css";
+---
+
+<Layout title="E-Commerce - Productos">
+  <section class={styles.hero}>
+    <h1 class={styles.heroTitle}>Nuestros Productos</h1>
+    <p class={styles.heroSubtitle}>Descubre nuestra amplia selección de productos de alta calidad</p>
+  </section>
+
+  <section class={styles.productsSection}>
+    <div class={styles.container}>
+      <h2 class={styles.sectionTitle}>Productos Destacados</h2>
+      <ProductShowcase />
+    </div>
+  </section>
+</Layout>
