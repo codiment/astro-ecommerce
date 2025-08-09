@@ -43,11 +43,26 @@ export class UserService {
     });
   }
 
-  remove(id: number) {
-    return this.prisma.user.delete({
-      where: {
-        id,
-      },
+  async remove(id: number) {
+    return this.prisma.$transaction(async (prisma) => {
+      // Eliminar todos los items del carrito primero
+      await prisma.cartItem.deleteMany({
+        where: {
+          cart: {
+            userId: id,
+          },
+        },
+      });
+
+      // Eliminar el carrito
+      await prisma.cart.deleteMany({
+        where: { userId: id },
+      });
+
+      // Finalmente eliminar el usuario
+      return prisma.user.delete({
+        where: { id },
+      });
     });
   }
 
