@@ -87,6 +87,19 @@ model OrderItem {
   price     Float
 }
 
+model EmailLog {
+  id              Int      @id @default(autoincrement())
+  recipient       String
+  emailType       String   // 'WELCOME', 'ORDER_CONFIRMATION', 'ORDER_STATUS_UPDATE'
+  subject         String
+  idempotencyKey  String?  // Para deduplicación manual
+  relatedEntityId Int?     // orderId para emails de orden, userId para welcome
+  sentAt          DateTime @default(now())
+  
+  @@unique([recipient, emailType, relatedEntityId])
+  @@index([idempotencyKey])
+}
+
 enum OrderStatus {
   PENDING
   PAID

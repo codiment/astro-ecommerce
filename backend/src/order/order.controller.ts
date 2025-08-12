@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Headers,
   NotFoundException,
   Param,
   ParseIntPipe,
@@ -11,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { JwtAuthGuard } from 'src/auth/jwt.auth.guard';
-import { ApiBearerAuth, ApiOperation, ApiParam } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiParam, ApiHeader } from '@nestjs/swagger';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 
@@ -27,8 +28,20 @@ export class OrderController {
   }
 
   @Post()
-  createOrder(@CurrentUser() user: { id: number }) {
-    return this.orderService.createOrder(user.id);
+  @ApiOperation({ 
+    summary: 'Create a new order',
+    description: 'Creates a new order from the user\'s cart. Supports idempotency via header.'
+  })
+  @ApiHeader({
+    name: 'Idempotency-Key',
+    description: 'Optional idempotency key to prevent duplicate orders',
+    required: false,
+  })
+  createOrder(
+    @CurrentUser() user: { id: number },
+    @Headers('idempotency-key') idempotencyKey?: string
+  ) {
+    return this.orderService.createOrder(user.id, idempotencyKey);
   }
 
   @Patch('pay/:id')

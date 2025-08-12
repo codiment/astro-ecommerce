@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Resend } from 'resend';
+import { PrismaService } from '../prisma/prisma.service';
 
 export interface EmailOptions {
   to: string | string[];
@@ -27,7 +28,10 @@ export class EmailService {
   private resend: Resend;
   private fromEmail: string;
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    private prisma: PrismaService,
+  ) {
     const apiKey = this.configService.get<string>('RESEND_API_KEY');
     this.fromEmail = this.configService.get<string>('FROM_EMAIL') || 'onboarding@resend.dev';
     
@@ -38,6 +42,70 @@ export class EmailService {
 
     this.resend = new Resend(apiKey);
     this.logger.log('Email service initialized with Resend');
+  }
+
+  private async checkEmailAlreadySent(
+    recipient: string,
+    emailType: string,
+    relatedEntityId?: number,
+    idempotencyKey?: string,
+  ): Promise<boolean> {
+    try {
+      // Verificar por idempotency key si se proporciona
+      if (idempotencyKey) {
+        const existingByKey = await this.prisma.emailLog.findFirst({
+          where: { idempotencyKey },
+        });
+        if (existingByKey) {
+          this.logger.log(`Email already sent with idempotency key: ${idempotencyKey}`);
+          return true;
+        }
+      }
+
+      // Verificar por combinación única de recipient, emailType y relatedEntityId
+      const existing = await this.prisma.emailLog.findFirst({
+        where: {
+          recipient,
+          emailType,
+          relatedEntityId,
+        },
+      });
+
+      if (existing) {
+        this.logger.log(`Email already sent: ${emailType} to ${recipient} for entity ${relatedEntityId}`);
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      this.logger.error('Error checking email log:', error);
+      // En caso de error, permitir el envío para no bloquear funcionalidad crítica
+      return false;
+    }
+  }
+
+  private async logEmailSent(
+    recipient: string,
+    emailType: string,
+    subject: string,
+    relatedEntityId?: number,
+    idempotencyKey?: string,
+  ): Promise<void> {
+    try {
+      await this.prisma.emailLog.create({
+        data: {
+          recipient,
+          emailType,
+          subject,
+          relatedEntityId,
+          idempotencyKey,
+        },
+      });
+      this.logger.log(`Email logged: ${emailType} to ${recipient}`);
+    } catch (error) {
+      this.logger.error('Error logging email:', error);
+      // No lanzar error para no afectar el flujo principal
+    }
   }
 
   async sendEmail(options: EmailOptions): Promise<boolean> {
@@ -82,7 +150,25 @@ export class EmailService {
     }
   }
 
-  async sendWelcomeEmail(email: string, name: string): Promise<boolean> {
+  async sendWelcomeEmail(
+    email: string, 
+    name: string, 
+    userId?: number,
+    idempotencyKey?: string
+  ): Promise<boolean> {
+    // Verificar si ya se envió este email
+    const alreadySent = await this.checkEmailAlreadySent(
+      email,
+      'WELCOME',
+      userId,
+      idempotencyKey,
+    );
+
+    if (alreadySent) {
+      this.logger.log(`Welcome email already sent to ${email}`);
+      return true; // Retornar true porque el email ya fue enviado exitosamente
+    }
+
     const text = `Hola ${name},
 
 Gracias por registrarte en nuestro E-commerce. Estamos emocionados de tenerte como parte de nuestra comunidad.
@@ -95,14 +181,38 @@ Ahora puedes:
 ¡Feliz compra!
 El equipo de E-commerce`;
 
-    return this.sendEmail({
+    const subject = '¡Bienvenido a nuestro E-commerce!';
+    const success = await this.sendEmail({
       to: email,
-      subject: '¡Bienvenido a nuestro E-commerce!',
+      subject,
       text,
     });
+
+    if (success) {
+      await this.logEmailSent(email, 'WELCOME', subject, userId, idempotencyKey);
+    }
+
+    return success;
   }
 
-  async sendOrderConfirmationEmail(email: string, orderData: OrderEmailData): Promise<boolean> {
+  async sendOrderConfirmationEmail(
+    email: string, 
+    orderData: OrderEmailData,
+    idempotencyKey?: string
+  ): Promise<boolean> {
+    // Verificar si ya se envió este email
+    const alreadySent = await this.checkEmailAlreadySent(
+      email,
+      'ORDER_CONFIRMATION',
+      orderData.orderId,
+      idempotencyKey,
+    );
+
+    if (alreadySent) {
+      this.logger.log(`Order confirmation email already sent for order ${orderData.orderId}`);
+      return true;
+    }
+
     const itemsList = orderData.items
       .map(item => `- ${item.title} x${item.quantity} - $${(item.quantity * item.price).toFixed(2)}`)
       .join('\n');
@@ -121,11 +231,18 @@ Te notificaremos cuando tu pedido sea enviado.
 ¡Gracias por tu compra!
 El equipo de E-commerce`;
 
-    return this.sendEmail({
+    const subject = `Confirmación de Pedido #${orderData.orderId}`;
+    const success = await this.sendEmail({
       to: email,
-      subject: `Confirmación de Pedido #${orderData.orderId}`,
+      subject,
       text,
     });
+
+    if (success) {
+      await this.logEmailSent(email, 'ORDER_CONFIRMATION', subject, orderData.orderId, idempotencyKey);
+    }
+
+    return success;
   }
 
   async sendOrderStatusUpdateEmail(
@@ -133,7 +250,24 @@ El equipo de E-commerce`;
     customerName: string,
     orderId: number,
     status: string,
+    idempotencyKey?: string,
   ): Promise<boolean> {
+    // Para status updates, incluir el status en el tipo para permitir múltiples updates
+    const emailType = `ORDER_STATUS_UPDATE_${status}`;
+    
+    // Verificar si ya se envió este email específico
+    const alreadySent = await this.checkEmailAlreadySent(
+      email,
+      emailType,
+      orderId,
+      idempotencyKey,
+    );
+
+    if (alreadySent) {
+      this.logger.log(`Order status update email already sent for order ${orderId} with status ${status}`);
+      return true;
+    }
+
     const statusMessages = {
       PAID: 'Tu pedido ha sido pagado exitosamente',
       CANCELLED: 'Tu pedido ha sido cancelado',
@@ -154,11 +288,18 @@ Puedes revisar el estado completo de tu pedido en tu cuenta.
 ¡Gracias por elegirnos!
 El equipo de E-commerce`;
 
-    return this.sendEmail({
+    const subject = `Actualización de Pedido #${orderId}`;
+    const success = await this.sendEmail({
       to: email,
-      subject: `Actualización de Pedido #${orderId}`,
+      subject,
       text,
     });
+
+    if (success) {
+      await this.logEmailSent(email, emailType, subject, orderId, idempotencyKey);
+    }
+
+    return success;
   }
 }
 
