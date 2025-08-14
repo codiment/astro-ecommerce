@@ -1,0 +1,21 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import ProductsTable from "../../../features/admin/components/ProductsTable.astro";
+import styles from "../../../styles/admin.module.css";
+---
+
+<AdminLayout title="Admin - Productos" currentPage="products">
+  <div class={styles.pageContainer}>
+    <div class={styles.pageHeader}>
+      <div>
+        <h1 class={styles.pageTitle}>Gestión de Productos</h1>
+        <p class={styles.pageSubtitle}>Administra tu inventario</p>
+      </div>
+      <a href="/admin/products/new" class={styles.primaryBtn}>
+        + Nuevo Producto
+      </a>
+    </div>
+    
+    <ProductsTable />
+  </div>
+</AdminLayout>

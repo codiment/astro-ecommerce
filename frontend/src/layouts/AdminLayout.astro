@@ -1,0 +1,35 @@
+---
+import '../styles/globals.css'
+import styles from '../styles/admin.module.css';
+import AdminSidebar from '../components/admin/AdminSidebar.astro';
+import AdminHeader from '../components/admin/AdminHeader.astro';
+
+export interface AdminLayoutProps {
+    title: string;
+    currentPage?: string;
+}
+
+const { title, currentPage } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+  </head>
+  <body class={styles.adminBody}>
+    <div class={styles.adminContainer}>
+      <AdminSidebar currentPage={currentPage} />
+      <div class={styles.adminMain}>
+        <AdminHeader />
+        <main class={styles.adminContent}>
+          <slot />
+        </main>
+      </div>
+    </div>
+  </body>
+</html>

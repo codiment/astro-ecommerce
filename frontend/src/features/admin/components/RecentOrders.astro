@@ -1,0 +1,164 @@
+---
+const recentOrders = [
+  {
+    id: '#001',
+    customer: 'Juan Pérez',
+    product: 'Laptop Gaming',
+    amount: '$1,299',
+    status: 'Completado',
+    date: '2024-01-15'
+  },
+  {
+    id: '#002',
+    customer: 'María García',
+    product: 'Smartphone Pro',
+    amount: '$899',
+    status: 'Pendiente',
+    date: '2024-01-14'
+  },
+  {
+    id: '#003',
+    customer: 'Carlos López',
+    product: 'Auriculares Bluetooth',
+    amount: '$199',
+    status: 'Enviado',
+    date: '2024-01-13'
+  }
+];
+---
+
+<div class="orders-container">
+  <div class="orders-header">
+    <h3>Órdenes Recientes</h3>
+    <a href="/admin/orders" class="view-all">Ver todas</a>
+  </div>
+  
+  <div class="orders-table">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Cliente</th>
+          <th>Producto</th>
+          <th>Monto</th>
+          <th>Estado</th>
+          <th>Fecha</th>
+        </tr>
+      </thead>
+      <tbody>
+        {recentOrders.map((order) => (
+          <tr>
+            <td class="order-id">{order.id}</td>
+            <td>{order.customer}</td>
+            <td>{order.product}</td>
+            <td class="amount">{order.amount}</td>
+            <td>
+              <span class={`status status-${order.status.toLowerCase()}`}>
+                {order.status}
+              </span>
+            </td>
+            <td class="date">{order.date}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<style>
+  .orders-container {
+    background: white;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  .orders-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .orders-header h3 {
+    margin: 0;
+    color: #1e293b;
+    font-size: 1.125rem;
+    font-weight: 600;
+  }
+
+  .view-all {
+    color: #3b82f6;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  .view-all:hover {
+    text-decoration: underline;
+  }
+
+  .orders-table {
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th, td {
+    text-align: left;
+    padding: 0.75rem 0.5rem;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  th {
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.875rem;
+    background: #f8fafc;
+  }
+
+  td {
+    color: #6b7280;
+    font-size: 0.875rem;
+  }
+
+  .order-id {
+    font-family: monospace;
+    font-weight: 600;
+    color: #374151;
+  }
+
+  .amount {
+    font-weight: 600;
+    color: #059669;
+  }
+
+  .status {
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+
+  .status-completado {
+    background: #dcfce7;
+    color: #16a34a;
+  }
+
+  .status-pendiente {
+    background: #fef3c7;
+    color: #d97706;
+  }
+
+  .status-enviado {
+    background: #dbeafe;
+    color: #2563eb;
+  }
+
+  .date {
+    color: #9ca3af;
+  }
+</style>

@@ -1,0 +1,87 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import DashboardStats from "../../features/admin/components/DashboardStats.astro";
+import RecentOrders from "../../features/admin/components/RecentOrders.astro";
+---
+
+<AdminLayout title="Admin - Dashboard" currentPage="dashboard">
+  <div class="dashboard-container">
+    <div class="dashboard-header">
+      <h1 class="page-title">Dashboard</h1>
+      <p class="page-subtitle">Resumen general de tu e-commerce</p>
+    </div>
+    
+    <DashboardStats />
+    
+    <div class="dashboard-grid">
+      <div class="dashboard-section">
+        <RecentOrders />
+      </div>
+      
+      <div class="dashboard-section">
+        <div class="placeholder-card">
+          <h3>Productos Más Vendidos</h3>
+          <p>Próximamente...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</AdminLayout>
+
+<style>
+  .dashboard-container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .dashboard-header {
+    margin-bottom: 2rem;
+  }
+
+  .page-title {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #1e293b;
+    margin: 0 0 0.5rem 0;
+  }
+
+  .page-subtitle {
+    color: #64748b;
+    margin: 0;
+  }
+
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-top: 2rem;
+  }
+
+  .dashboard-section {
+    min-height: 300px;
+  }
+
+  .placeholder-card {
+    background: white;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    text-align: center;
+  }
+
+  .placeholder-card h3 {
+    margin: 0 0 1rem 0;
+    color: #1e293b;
+  }
+
+  .placeholder-card p {
+    color: #64748b;
+    margin: 0;
+  }
+
+  @media (max-width: 768px) {
+    .dashboard-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

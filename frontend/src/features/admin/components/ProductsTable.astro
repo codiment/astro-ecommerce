@@ -1,0 +1,66 @@
+---
+import styles from '../../../styles/admin.module.css';
+
+// Datos de ejemplo - después puedes conectar con tu API
+const products = [
+  {
+    id: 1,
+    title: "Smartphone Premium",
+    price: 899,
+    stock: 25,
+    image: "/images/smartphone.jpg"
+  },
+  {
+    id: 2,
+    title: "Laptop Gaming",
+    price: 1299,
+    stock: 15,
+    image: "/images/laptop.jpg"
+  },
+  {
+    id: 3,
+    title: "Auriculares Wireless",
+    price: 199,
+    stock: 50,
+    image: "/images/headphones.jpg"
+  }
+];
+---
+
+<div class={styles.tableContainer}>
+  <table class={styles.table}>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Producto</th>
+        <th>Precio</th>
+        <th>Stock</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {products.map((product) => (
+        <tr>
+          <td>{product.id}</td>
+          <td>
+            <div class={styles.productInfo}>
+              <span class={styles.productName}>{product.title}</span>
+            </div>
+          </td>
+          <td class={styles.price}>${product.price}</td>
+          <td>
+            <span class={`${styles.stockBadge} ${product.stock > 20 ? styles.stockHigh : product.stock > 10 ? styles.stockMedium : styles.stockLow}`}>
+              {product.stock}
+            </span>
+          </td>
+          <td>
+            <div class={styles.actionButtons}>
+              <button class={styles.editBtn}>Editar</button>
+              <button class={styles.deleteBtn}>Eliminar</button>
+            </div>
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>

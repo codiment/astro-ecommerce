@@ -28,20 +28,28 @@ const products = [
 
 <div class={styles.container}>
   {products.map((product) => (
-    <div class={styles.productCard}>
+    <a href={`/products/${product.id}`} class={styles.productCard}>
       <div class={styles.productHeader}>
         <div class={styles.titleRow}>
-          <h3 class={styles.productTitle}>{product.name}</h3>
-          <span class={styles.productBadge}>{product.badge}</span>
+          <h3 class={styles.productTitle} transition:name={`product-title-${product.id}`}>
+            {product.name}
+          </h3>
+          <span class={styles.productBadge} transition:name={`product-badge-${product.id}`}>
+            {product.badge}
+          </span>
         </div>
         <p class={styles.productDescription}>{product.description}</p>
       </div>
       <div class={styles.productContent}>
         <div class={styles.productFooter}>
-          <span class={styles.productPrice}>{product.price}</span>
-          <button class={styles.addToCartBtn}>Agregar al carrito</button>
+          <span class={styles.productPrice} transition:name={`product-price-${product.id}`}>
+            {product.price}
+          </span>
+          <button class={styles.addToCartBtn} onclick="event.preventDefault(); event.stopPropagation();">
+            Agregar al carrito
+          </button>
         </div>
       </div>
-    </div>
+    </a>
   ))}
 </div>

@@ -2,8 +2,7 @@
 import styles from '../../styles/navbar.module.css'
 import { Search, ShoppingCart, User } from '@lucide/astro';
 
-const navItems = [
-  { name: 'Inicio', url: '/' },
+const navItems = [ 
   { name: 'Productos', url: '/products' },
   { name: 'Categorías', url: '/categorias' },
   { name: 'Ofertas', url: '/ofertas' },
@@ -45,16 +44,4 @@ const navItems = [
   </div>
 </nav>
 
-<script>
-  document.getElementById('searchInput')?.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-      const searchTerm = (e.target as HTMLInputElement).value;
-      if (searchTerm.trim()) {
-        console.log('Searching for:', searchTerm);
-        // Aquí implementarías la lógica de búsqueda
-        // Por ejemplo: window.location.href = `/search?q=${encodeURIComponent(searchTerm)}`;
-        alert(`Buscando: ${searchTerm}`);
-      }
-    }
-  });
-</script>
+<!-- SIN SCRIPT -->
