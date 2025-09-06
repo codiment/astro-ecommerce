@@ -9,45 +9,48 @@ export class EmailController {
   constructor(private emailService: EmailService) {}
 
   @Post('test/welcome')
-  @ApiOperation({ 
-    summary: 'Enviar email de bienvenida de prueba',
-    description: 'Envía un email de bienvenida para probar la configuración de Resend'
+  @ApiOperation({
+    summary: 'Send test welcome email',
+    description: 'Sends a welcome email to test the Resend configuration',
   })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'Email enviado exitosamente',
+  @ApiResponse({
+    status: 200,
+    description: 'Email sent successfully',
     schema: {
       type: 'object',
       properties: {
         success: { type: 'boolean' },
-        message: { type: 'string' }
-      }
-    }
+        message: { type: 'string' },
+      },
+    },
   })
-  @ApiResponse({ 
-    status: 400, 
-    description: 'Error al enviar el email' 
+  @ApiResponse({
+    status: 400,
+    description: 'Error sending email',
   })
   async testWelcomeEmail(@Body() body: SendTestEmailDto) {
-    const result = await this.emailService.sendWelcomeEmail(body.email, body.name);
-    return { 
+    const result = await this.emailService.sendWelcomeEmail(
+      body.email,
+      body.name,
+    );
+    return {
       success: result,
-      message: result ? 'Email enviado exitosamente' : 'Error al enviar email'
+      message: result ? 'Email sent successfully' : 'Error sending email',
     };
   }
 
   @Post('send')
-  @ApiOperation({ 
-    summary: 'Enviar email personalizado',
-    description: 'Envía un email personalizado con el contenido especificado'
+  @ApiOperation({
+    summary: 'Send custom email',
+    description: 'Sends a custom email with the specified content',
   })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'Email enviado exitosamente' 
+  @ApiResponse({
+    status: 200,
+    description: 'Email sent successfully',
   })
-  @ApiResponse({ 
-    status: 400, 
-    description: 'Error al enviar el email' 
+  @ApiResponse({
+    status: 400,
+    description: 'Error sending email',
   })
   async sendCustomEmail(@Body() body: SendCustomEmailDto) {
     const result = await this.emailService.sendEmail({
@@ -56,10 +59,10 @@ export class EmailController {
       text: body.text,
       from: body.from,
     });
-    
-    return { 
+
+    return {
       success: result,
-      message: result ? 'Email enviado exitosamente' : 'Error al enviar email'
+      message: result ? 'Email sent successfully' : 'Error sending email',
     };
   }
 }

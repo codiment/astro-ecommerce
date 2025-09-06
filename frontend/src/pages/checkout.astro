@@ -1,0 +1,757 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="Checkout - AstroShop">
+    <div class="bg-gray-50 min-h-screen">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <h1 class="text-3xl font-extrabold text-gray-900 mb-8">
+                Finalize Purchase
+            </h1>
+
+            <!-- Loading state -->
+            <div id="loadingState" class="text-center py-12">
+                <div
+                    class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"
+                >
+                </div>
+                <p class="mt-2 text-gray-600">Loading information...</p>
+            </div>
+
+            <!-- Error state -->
+            <div id="errorState" class="text-center py-12 hidden">
+                <div class="text-red-500 mb-4">
+                    <svg
+                        class="mx-auto h-12 w-12"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        ></path>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">
+                    Error loading checkout
+                </h3>
+                <p class="text-gray-600 mb-4">
+                    Could not load checkout information. Please try again.
+                </p>
+                <button
+                    id="retryBtn"
+                    class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+                >
+                    Retry
+                </button>
+            </div>
+
+            <!-- Empty cart state -->
+            <div id="emptyState" class="text-center py-12 hidden">
+                <div class="text-gray-400 mb-4">
+                    <svg
+                        class="mx-auto h-16 w-16"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 6M7 13l-1.5-6m0 0h15M17 21a2 2 0 100-4 2 2 0 000 4zM9 21a2 2 0 100-4 2 2 0 000 4z"
+                        ></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-medium text-gray-900 mb-2">
+                    Your cart is empty
+                </h3>
+                <p class="text-gray-600 mb-6">
+                    Add some products before proceeding to checkout
+                </p>
+                <a
+                    href="/products"
+                    class="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-colors"
+                >
+                    Explore Products
+                </a>
+            </div>
+
+            <!-- Checkout content -->
+            <div id="checkoutContent" class="hidden">
+                <div
+                    class="lg:grid lg:grid-cols-12 lg:gap-x-12 lg:items-start xl:gap-x-16"
+                >
+                    <!-- Checkout form -->
+                    <section class="lg:col-span-7">
+                        <form id="checkoutForm" class="space-y-6">
+                            <!-- Contact information -->
+                            <div class="bg-white shadow rounded-lg p-6">
+                                <h2
+                                    class="text-lg font-medium text-gray-900 mb-4"
+                                >
+                                    Contact Information
+                                </h2>
+                                <div
+                                    class="grid grid-cols-1 gap-4 sm:grid-cols-2"
+                                >
+                                    <div>
+                                        <label
+                                            for="firstName"
+                                            class="block text-sm font-medium text-gray-700"
+                                            >First Name</label
+                                        >
+                                        <input
+                                            type="text"
+                                            id="firstName"
+                                            name="firstName"
+                                            required
+                                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label
+                                            for="lastName"
+                                            class="block text-sm font-medium text-gray-700"
+                                            >Last Name</label
+                                        >
+                                        <input
+                                            type="text"
+                                            id="lastName"
+                                            name="lastName"
+                                            required
+                                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                        />
+                                    </div>
+                                    <div class="sm:col-span-2">
+                                        <label
+                                            for="email"
+                                            class="block text-sm font-medium text-gray-700"
+                                            >Email</label
+                                        >
+                                        <input
+                                            type="email"
+                                            id="email"
+                                            name="email"
+                                            required
+                                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                        />
+                                    </div>
+                                    <div class="sm:col-span-2">
+                                        <label
+                                            for="phone"
+                                            class="block text-sm font-medium text-gray-700"
+                                            >Phone</label
+                                        >
+                                        <input
+                                            type="tel"
+                                            id="phone"
+                                            name="phone"
+                                            required
+                                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Shipping information -->
+                            <div class="bg-white shadow rounded-lg p-6">
+                                <h2
+                                    class="text-lg font-medium text-gray-900 mb-4"
+                                >
+                                    Shipping Address
+                                </h2>
+                                <div
+                                    class="grid grid-cols-1 gap-4 sm:grid-cols-2"
+                                >
+                                    <div class="sm:col-span-2">
+                                        <label
+                                            for="address"
+                                            class="block text-sm font-medium text-gray-700"
+                                            >Address</label
+                                        >
+                                        <input
+                                            type="text"
+                                            id="address"
+                                            name="address"
+                                            required
+                                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label
+                                            for="city"
+                                            class="block text-sm font-medium text-gray-700"
+                                            >City</label
+                                        >
+                                        <input
+                                            type="text"
+                                            id="city"
+                                            name="city"
+                                            required
+                                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label
+                                            for="postalCode"
+                                            class="block text-sm font-medium text-gray-700"
+                                            >Postal Code</label
+                                        >
+                                        <input
+                                            type="text"
+                                            id="postalCode"
+                                            name="postalCode"
+                                            required
+                                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label
+                                            for="state"
+                                            class="block text-sm font-medium text-gray-700"
+                                            >State/Province</label
+                                        >
+                                        <input
+                                            type="text"
+                                            id="state"
+                                            name="state"
+                                            required
+                                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label
+                                            for="country"
+                                            class="block text-sm font-medium text-gray-700"
+                                            >Country</label
+                                        >
+                                        <select
+                                            id="country"
+                                            name="country"
+                                            required
+                                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                        >
+                                            <option value=""
+                                                >Select country</option
+                                            >
+                                            <option value="AR">Argentina</option
+                                            >
+                                            <option value="CL">Chile</option>
+                                            <option value="CO">Colombia</option>
+                                            <option value="MX">Mexico</option>
+                                            <option value="PE">Peru</option>
+                                            <option value="UY">Uruguay</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Payment method -->
+                            <div class="bg-white shadow rounded-lg p-6">
+                                <h2
+                                    class="text-lg font-medium text-gray-900 mb-4"
+                                >
+                                    Payment Method
+                                </h2>
+                                <div class="space-y-4">
+                                    <div class="flex items-center">
+                                        <input
+                                            id="credit-card"
+                                            name="payment-method"
+                                            type="radio"
+                                            value="credit-card"
+                                            checked
+                                            class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300"
+                                        />
+                                        <label
+                                            for="credit-card"
+                                            class="ml-3 block text-sm font-medium text-gray-700"
+                                        >
+                                            Credit/Debit Card
+                                        </label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input
+                                            id="paypal"
+                                            name="payment-method"
+                                            type="radio"
+                                            value="paypal"
+                                            class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300"
+                                        />
+                                        <label
+                                            for="paypal"
+                                            class="ml-3 block text-sm font-medium text-gray-700"
+                                        >
+                                            PayPal
+                                        </label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input
+                                            id="bank-transfer"
+                                            name="payment-method"
+                                            type="radio"
+                                            value="bank-transfer"
+                                            class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300"
+                                        />
+                                        <label
+                                            for="bank-transfer"
+                                            class="ml-3 block text-sm font-medium text-gray-700"
+                                        >
+                                            Bank Transfer
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Credit card information -->
+                                <div id="creditCardInfo" class="mt-6 space-y-4">
+                                    <div>
+                                        <label
+                                            for="cardNumber"
+                                            class="block text-sm font-medium text-gray-700"
+                                            >Card Number</label
+                                        >
+                                        <input
+                                            type="text"
+                                            id="cardNumber"
+                                            name="cardNumber"
+                                            placeholder="1234 5678 9012 3456"
+                                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                        />
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label
+                                                for="expiryDate"
+                                                class="block text-sm font-medium text-gray-700"
+                                                >Expiration Date</label
+                                            >
+                                            <input
+                                                type="text"
+                                                id="expiryDate"
+                                                name="expiryDate"
+                                                placeholder="MM/YY"
+                                                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label
+                                                for="cvv"
+                                                class="block text-sm font-medium text-gray-700"
+                                                >CVV</label
+                                            >
+                                            <input
+                                                type="text"
+                                                id="cvv"
+                                                name="cvv"
+                                                placeholder="123"
+                                                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label
+                                            for="cardName"
+                                            class="block text-sm font-medium text-gray-700"
+                                            >Name on Card</label
+                                        >
+                                        <input
+                                            type="text"
+                                            id="cardName"
+                                            name="cardName"
+                                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </section>
+
+                    <!-- Order summary -->
+                    <section
+                        class="mt-16 bg-white rounded-lg shadow px-4 py-6 sm:p-6 lg:p-8 lg:mt-0 lg:col-span-5"
+                    >
+                        <h2 class="text-lg font-medium text-gray-900 mb-4">
+                            Order Summary
+                        </h2>
+
+                        <!-- Cart items -->
+                        <div id="orderItems" class="space-y-4 mb-6">
+                            <!-- Items will be loaded here -->
+                        </div>
+
+                        <div class="border-t border-gray-200 pt-4 space-y-4">
+                            <div class="flex items-center justify-between">
+                                <dt class="text-sm text-gray-600">Subtotal</dt>
+                                <dd
+                                    class="text-sm font-medium text-gray-900"
+                                    id="subtotal"
+                                >
+                                    $0.00
+                                </dd>
+                            </div>
+
+                            <div class="flex items-center justify-between">
+                                <dt class="text-sm text-gray-600">Shipping</dt>
+                                <dd class="text-sm font-medium text-gray-900">
+                                    $5.00
+                                </dd>
+                            </div>
+
+                            <div class="flex items-center justify-between">
+                                <dt class="text-sm text-gray-600">Taxes</dt>
+                                <dd
+                                    class="text-sm font-medium text-gray-900"
+                                    id="taxes"
+                                >
+                                    $0.00
+                                </dd>
+                            </div>
+
+                            <div
+                                class="border-t border-gray-200 pt-4 flex items-center justify-between"
+                            >
+                                <dt class="text-base font-medium text-gray-900">
+                                    Total
+                                </dt>
+                                <dd
+                                    class="text-base font-medium text-gray-900"
+                                    id="total"
+                                >
+                                    $0.00
+                                </dd>
+                            </div>
+                        </div>
+
+                        <div class="mt-6">
+                            <button
+                                id="placeOrderBtn"
+                                type="submit"
+                                form="checkoutForm"
+                                class="w-full bg-blue-600 border border-transparent rounded-md shadow-sm py-3 px-4 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <span id="placeOrderText">Place Order</span>
+                                <div
+                                    id="placeOrderLoading"
+                                    class="hidden flex items-center justify-center"
+                                >
+                                    <div
+                                        class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"
+                                    >
+                                    </div>
+                                    Processing...
+                                </div>
+                            </button>
+                        </div>
+
+                        <div class="mt-6 text-center">
+                            <a
+                                href="/cart"
+                                class="text-sm text-blue-600 hover:text-blue-500"
+                            >
+                                ← Back to cart
+                            </a>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+</Layout>
+
+<script>
+    import { apiService } from "../services/api";
+    import type { Cart, CartItem } from "../types";
+
+    // DOM Elements
+    const loadingState = document.getElementById("loadingState")!;
+    const errorState = document.getElementById("errorState")!;
+    const emptyState = document.getElementById("emptyState")!;
+    const checkoutContent = document.getElementById("checkoutContent")!;
+    const retryBtn = document.getElementById("retryBtn")!;
+    const checkoutForm = document.getElementById(
+        "checkoutForm",
+    ) as HTMLFormElement;
+    const placeOrderBtn = document.getElementById(
+        "placeOrderBtn",
+    ) as HTMLButtonElement;
+    const placeOrderText = document.getElementById("placeOrderText")!;
+    const placeOrderLoading = document.getElementById("placeOrderLoading")!;
+    const orderItems = document.getElementById("orderItems")!;
+    const subtotalEl = document.getElementById("subtotal")!;
+    const taxesEl = document.getElementById("taxes")!;
+    const totalEl = document.getElementById("total")!;
+    const creditCardInfo = document.getElementById("creditCardInfo")!;
+
+    let currentCart: Cart | null = null;
+
+    // Function to show different states
+    function showState(state: "loading" | "error" | "empty" | "checkout") {
+        loadingState.classList.toggle("hidden", state !== "loading");
+        errorState.classList.toggle("hidden", state !== "error");
+        emptyState.classList.toggle("hidden", state !== "empty");
+        checkoutContent.classList.toggle("hidden", state !== "checkout");
+    }
+
+    // Function to create HTML for an order item
+    function createOrderItemHTML(item: CartItem): string {
+        return `
+      <div class="flex items-center space-x-4">
+        <img
+          src="${item.product.image || "/placeholder-product.jpg"}"
+          alt="${item.product.title}"
+          class="w-16 h-16 object-cover rounded-md"
+        />
+        <div class="flex-1">
+          <h4 class="text-sm font-medium text-gray-900">${item.product.title}</h4>
+          <p class="text-sm text-gray-500">Quantity: ${item.quantity}</p>
+        </div>
+        <div class="text-sm font-medium text-gray-900">
+          $${(item.product.price * item.quantity).toFixed(2)}
+        </div>
+      </div>
+    `;
+    }
+
+    // Function to update the order summary
+    function updateOrderSummary(cart: Cart) {
+        const subtotal = cart.total;
+        const shipping = 5.0;
+        const taxes = subtotal * 0.1; // 10% tax
+        const total = subtotal + shipping + taxes;
+
+        subtotalEl.textContent = `$${subtotal.toFixed(2)}`;
+        taxesEl.textContent = `$${taxes.toFixed(2)}`;
+        totalEl.textContent = `$${total.toFixed(2)}`;
+    }
+
+    // Function to render the order items
+    function renderOrderItems(cart: Cart) {
+        if (!cart.items || cart.items.length === 0) {
+            showState("empty");
+            return;
+        }
+
+        const html = cart.items.map(createOrderItemHTML).join("");
+        orderItems.innerHTML = html;
+        updateOrderSummary(cart);
+        showState("checkout");
+    }
+
+    // Function to load the cart
+    async function loadCart() {
+        if (!apiService.isAuthenticated()) {
+            showState("empty");
+            return;
+        }
+
+        showState("loading");
+
+        try {
+            const response = await apiService.getCart();
+
+            if (response.success && response.data) {
+                currentCart = response.data;
+                renderOrderItems(currentCart);
+
+                // Pre-fill the user's email if available
+                const userResponse = await apiService.getCurrentUser();
+                if (userResponse.success && userResponse.data) {
+                    const emailInput = document.getElementById(
+                        "email",
+                    ) as HTMLInputElement;
+                    if (emailInput) {
+                        emailInput.value = userResponse.data.email;
+                    }
+                }
+            } else {
+                showState("error");
+            }
+        } catch (error) {
+            console.error("Error loading cart:", error);
+            showState("error");
+        }
+    }
+
+    // Function to show notifications
+    function showNotification(
+        message: string,
+        type: "success" | "error" | "warning" = "success",
+    ) {
+        // Create notification element
+        const notification = document.createElement("div");
+        notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-sm transform transition-all duration-300 translate-x-full`;
+
+        // Styles according to type
+        switch (type) {
+            case "success":
+                notification.classList.add("bg-green-500", "text-white");
+                break;
+            case "error":
+                notification.classList.add("bg-red-500", "text-white");
+                break;
+            case "warning":
+                notification.classList.add("bg-yellow-500", "text-white");
+                break;
+        }
+
+        notification.innerHTML = `
+      <div class="flex items-center">
+        <span class="flex-1">${message}</span>
+        <button onclick="this.parentElement.parentElement.remove()" class="ml-2 text-white hover:text-gray-200">
+          ×
+        </button>
+      </div>
+    `;
+
+        document.body.appendChild(notification);
+
+        // Animate entrance
+        setTimeout(() => {
+            notification.classList.remove("translate-x-full");
+        }, 100);
+
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            notification.classList.add("translate-x-full");
+            setTimeout(() => {
+                notification.remove();
+            }, 300);
+        }, 5000);
+    }
+
+    // Function to process the order
+    async function processOrder(formData: FormData) {
+        if (!currentCart || currentCart.items.length === 0) {
+            showNotification("Your cart is empty", "error");
+            return;
+        }
+
+        // Show loading state
+        placeOrderBtn.disabled = true;
+        placeOrderText.classList.add("hidden");
+        placeOrderLoading.classList.remove("hidden");
+
+        try {
+            const response = await apiService.createOrder();
+
+            if (response.success && response.data) {
+                showNotification("Order placed successfully!", "success");
+
+                // Redirect to confirmation or orders page
+                setTimeout(() => {
+                    window.location.href = "/orders";
+                }, 2000);
+            } else {
+                throw new Error(response.error || "Error processing order");
+            }
+        } catch (error) {
+            console.error("Error processing order:", error);
+            showNotification(
+                error instanceof Error
+                    ? error.message
+                    : "Error processing order",
+                "error",
+            );
+        } finally {
+            // Restore button state
+            placeOrderBtn.disabled = false;
+            placeOrderText.classList.remove("hidden");
+            placeOrderLoading.classList.add("hidden");
+        }
+    }
+
+    // Event listeners
+    retryBtn.addEventListener("click", loadCart);
+
+    checkoutForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const formData = new FormData(checkoutForm);
+        await processOrder(formData);
+    });
+
+    // Handle payment method changes
+    const paymentMethods = document.querySelectorAll(
+        'input[name="payment-method"]',
+    );
+    paymentMethods.forEach((method) => {
+        method.addEventListener("change", (e) => {
+            const target = e.target as HTMLInputElement;
+            if (target.value === "credit-card") {
+                creditCardInfo.classList.remove("hidden");
+                // Make card fields required
+                const cardFields = creditCardInfo.querySelectorAll("input");
+                cardFields.forEach((field) =>
+                    field.setAttribute("required", ""),
+                );
+            } else {
+                creditCardInfo.classList.add("hidden");
+                // Remove required attribute from card fields
+                const cardFields = creditCardInfo.querySelectorAll("input");
+                cardFields.forEach((field) =>
+                    field.removeAttribute("required"),
+                );
+            }
+        });
+    });
+
+    // Format card number
+    const cardNumberInput = document.getElementById(
+        "cardNumber",
+    ) as HTMLInputElement;
+    cardNumberInput?.addEventListener("input", (e) => {
+        const target = e.target as HTMLInputElement;
+        let value = target.value.replace(/\s/g, "").replace(/\D/g, "");
+        value = value.replace(/(\d{4})(?=\d)/g, "$1 ");
+        target.value = value;
+    });
+
+    // Format expiration date
+    const expiryDateInput = document.getElementById(
+        "expiryDate",
+    ) as HTMLInputElement;
+    expiryDateInput?.addEventListener("input", (e) => {
+        const target = e.target as HTMLInputElement;
+        let value = target.value.replace(/\D/g, "");
+        if (value.length >= 2) {
+            value = value.substring(0, 2) + "/" + value.substring(2, 4);
+        }
+        target.value = value;
+    });
+
+    // Check authentication and load cart
+    if (!apiService.isAuthenticated()) {
+        // Show message for unauthenticated users
+        emptyState.innerHTML = `
+      <div class="text-center py-12">
+        <div class="text-gray-400 mb-4">
+          <svg class="mx-auto h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
+        </div>
+        <h3 class="text-xl font-medium text-gray-900 mb-2">Log in to continue</h3>
+        <p class="text-gray-600 mb-6">You need an account to checkout</p>
+        <div class="space-x-4">
+          <a
+            href="/login"
+            class="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-colors"
+          >
+            Log In
+          </a>
+          <a
+            href="/register"
+            class="border border-blue-600 text-blue-600 px-6 py-3 rounded-md hover:bg-blue-50 transition-colors"
+          >
+            Register
+          </a>
+        </div>
+      </div>
+    `;
+        showState("empty");
+    } else {
+        loadCart();
+    }
+</script>

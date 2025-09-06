@@ -12,7 +12,7 @@ export class CartService {
   constructor(private prisma: PrismaService) {}
 
   async getCart(userId: number) {
-    const cart = await this.prisma.cart.findUnique({
+    let cart = await this.prisma.cart.findUnique({
       where: { userId },
       include: {
         items: {
@@ -23,10 +23,31 @@ export class CartService {
       },
     });
 
+    // Si no existe carrito, crear uno vacío
     if (!cart) {
-      throw new NotFoundException('Cart not found');
+      cart = await this.prisma.cart.create({
+        data: {
+          userId,
+        },
+        include: {
+          items: {
+            include: {
+              product: true,
+            },
+          },
+        },
+      });
     }
-    return cart;
+
+    // Calcular el total del carrito
+    const total = cart.items.reduce((sum, item) => {
+      return sum + item.product.price * item.quantity;
+    }, 0);
+
+    return {
+      ...cart,
+      total,
+    };
   }
 
   async addToCart(userId: number, dto: addToCartDto) {

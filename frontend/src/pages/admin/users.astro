@@ -1,0 +1,897 @@
+---
+export const prerender = false;
+
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { requireAdmin } from "../../middleware/auth";
+
+// Verify authentication and administrator role
+const authResult = await requireAdmin(Astro.request);
+if (!authResult.isValid) {
+    return Astro.redirect(authResult.redirectTo || "/login");
+}
+
+const currentUser = authResult.user;
+---
+
+<AdminLayout
+    title="User Management - Admin"
+    activeSection="users"
+    currentUser={currentUser}
+>
+    <div class="users-content">
+        <div class="admin-header">
+            <h1>User Management</h1>
+            <button id="add-user-btn" class="btn btn-primary">
+                <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                >
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                Add User
+            </button>
+        </div>
+
+        <div class="users-grid">
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Loading users...</p>
+            </div>
+
+            <div
+                class="error-message"
+                id="error-message"
+                style="display: none;"
+            >
+                <p>Error loading users. Please try again.</p>
+                <button id="retry-btn" class="btn btn-secondary">Retry</button>
+            </div>
+
+            <div
+                class="users-table-container"
+                id="users-container"
+                style="display: none;"
+            >
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Email</th>
+                            <th>Name</th>
+                            <th>Role</th>
+                            <th>Registration Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-tbody">
+                        <!-- Users will be loaded here dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal to add/edit user -->
+    <div id="user-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Add User</h2>
+                <button class="modal-close" id="modal-close">&times;</button>
+            </div>
+            <form id="user-form">
+                <div class="form-group">
+                    <label for="email">Email *</label>
+                    <input type="email" id="email" name="email" required />
+                    <span class="error-text" id="email-error"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="name">Name</label>
+                    <input type="text" id="name" name="name" />
+                    <span class="error-text" id="name-error"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password *</label>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        required
+                    />
+                    <span class="error-text" id="password-error"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="role">Role *</label>
+                    <select id="role" name="role" required>
+                        <option value="USER">User</option>
+                        <option value="ADMIN">Administrator</option>
+                    </select>
+                    <span class="error-text" id="role-error"></span>
+                </div>
+
+                <div class="form-actions">
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        id="cancel-btn">Cancel</button
+                    >
+                    <button
+                        type="submit"
+                        class="btn btn-primary"
+                        id="submit-btn"
+                    >
+                        <span id="submit-text">Add User</span>
+                        <div
+                            class="btn-spinner"
+                            id="submit-spinner"
+                            style="display: none;"
+                        >
+                        </div>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Confirmation modal for deletion -->
+    <div id="delete-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Confirm Deletion</h2>
+                <button class="modal-close" id="delete-modal-close"
+                    >&times;</button
+                >
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this user?</p>
+                <p><strong id="delete-user-info"></strong></p>
+                <p class="warning">This action cannot be undone.</p>
+            </div>
+            <div class="form-actions">
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    id="delete-cancel-btn">Cancel</button
+                >
+                <button
+                    type="button"
+                    class="btn btn-danger"
+                    id="delete-confirm-btn"
+                >
+                    <span id="delete-text">Delete</span>
+                    <div
+                        class="btn-spinner"
+                        id="delete-spinner"
+                        style="display: none;"
+                    >
+                    </div>
+                </button>
+            </div>
+        </div>
+    </div>
+</AdminLayout>
+
+<script>
+    import { apiService } from "../../services/api";
+    import type { User } from "../../types";
+
+    // Application state
+    let users: User[] = [];
+    let editingUser: User | null = null;
+    let userToDelete: User | null = null;
+
+    // DOM Elements
+    const loading = document.getElementById("loading")!;
+    const errorMessage = document.getElementById("error-message")!;
+    const usersContainer = document.getElementById("users-container")!;
+    const usersTbody = document.getElementById("users-tbody")!;
+    const addUserBtn = document.getElementById("add-user-btn")!;
+    const retryBtn = document.getElementById("retry-btn")!;
+
+    // User modal
+    const userModal = document.getElementById("user-modal")!;
+    const modalTitle = document.getElementById("modal-title")!;
+    const userForm = document.getElementById("user-form") as HTMLFormElement;
+    const modalClose = document.getElementById("modal-close")!;
+    const cancelBtn = document.getElementById("cancel-btn")!;
+    const submitBtn = document.getElementById("submit-btn")!;
+    const submitText = document.getElementById("submit-text")!;
+    const submitSpinner = document.getElementById("submit-spinner")!;
+
+    // Deletion modal
+    const deleteModal = document.getElementById("delete-modal")!;
+    const deleteModalClose = document.getElementById("delete-modal-close")!;
+    const deleteUserInfo = document.getElementById("delete-user-info")!;
+    const deleteCancelBtn = document.getElementById("delete-cancel-btn")!;
+    const deleteConfirmBtn = document.getElementById("delete-confirm-btn")!;
+    const deleteText = document.getElementById("delete-text")!;
+    const deleteSpinner = document.getElementById("delete-spinner")!;
+
+    // Load users on initialization
+    document.addEventListener("DOMContentLoaded", () => {
+        loadUsers();
+    });
+
+    // Event listeners
+    addUserBtn.addEventListener("click", () => openUserModal());
+    retryBtn.addEventListener("click", () => loadUsers());
+    modalClose.addEventListener("click", () => closeUserModal());
+    cancelBtn.addEventListener("click", () => closeUserModal());
+    userForm.addEventListener("submit", handleUserSubmit);
+
+    deleteModalClose.addEventListener("click", () => closeDeleteModal());
+    deleteCancelBtn.addEventListener("click", () => closeDeleteModal());
+    deleteConfirmBtn.addEventListener("click", () => handleDeleteUser());
+
+    // Close modals on outside click
+    window.addEventListener("click", (e) => {
+        if (e.target === userModal) closeUserModal();
+        if (e.target === deleteModal) closeDeleteModal();
+    });
+
+    async function loadUsers() {
+        try {
+            showLoading();
+            const response = await apiService.getUsers();
+
+            if (response.success && response.data) {
+                users = response.data;
+                renderUsers();
+                showUsersContainer();
+            } else {
+                showError();
+            }
+        } catch (error) {
+            console.error("Error loading users:", error);
+            showError();
+        }
+    }
+
+    function renderUsers() {
+        usersTbody.innerHTML = users
+            .map(
+                (user) => `
+      <tr>
+        <td>${user.id}</td>
+        <td>${user.email}</td>
+        <td>${user.name || "-"}</td>
+        <td>
+          <span class="role-badge role-${user.role.toLowerCase()}">
+            ${user.role === "ADMIN" ? "Administrator" : "User"}
+          </span>
+        </td>
+        <td>${new Date(user.createdAt).toLocaleDateString("en-US")}</td>
+        <td class="actions">
+          <button class="btn btn-sm btn-secondary" onclick="editUser(${user.id})">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+          </button>
+          <button class="btn btn-sm btn-danger" onclick="confirmDeleteUser(${user.id})">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3,6 5,6 21,6"></polyline>
+              <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
+              <line x1="10" y1="11" x2="10" y2="17"></line>
+              <line x1="14" y1="11" x2="14" y2="17"></line>
+            </svg>
+          </button>
+        </td>
+      </tr>
+    `,
+            )
+            .join("");
+    }
+
+    function showLoading() {
+        loading.style.display = "flex";
+        errorMessage.style.display = "none";
+        usersContainer.style.display = "none";
+    }
+
+    function showError() {
+        loading.style.display = "none";
+        errorMessage.style.display = "block";
+        usersContainer.style.display = "none";
+    }
+
+    function showUsersContainer() {
+        loading.style.display = "none";
+        errorMessage.style.display = "none";
+        usersContainer.style.display = "block";
+    }
+
+    function openUserModal(user?: User) {
+        editingUser = user || null;
+        modalTitle.textContent = user ? "Edit User" : "Add User";
+        submitText.textContent = user ? "Update User" : "Add User";
+
+        if (user) {
+            (document.getElementById("email") as HTMLInputElement).value =
+                user.email;
+            (document.getElementById("name") as HTMLInputElement).value =
+                user.name || "";
+            (document.getElementById("password") as HTMLInputElement).value =
+                "";
+            (document.getElementById("role") as HTMLSelectElement).value =
+                user.role;
+
+            // Make password optional for editing
+            (document.getElementById("password") as HTMLInputElement).required =
+                false;
+        } else {
+            userForm.reset();
+            (document.getElementById("password") as HTMLInputElement).required =
+                true;
+        }
+
+        clearFormErrors();
+        userModal.style.display = "block";
+    }
+
+    function closeUserModal() {
+        userModal.style.display = "none";
+        editingUser = null;
+        userForm.reset();
+        clearFormErrors();
+    }
+
+    function openDeleteModal(user: User) {
+        userToDelete = user;
+        deleteUserInfo.textContent = `${user.email} (${user.name || "No name"})`;
+        deleteModal.style.display = "block";
+    }
+
+    function closeDeleteModal() {
+        deleteModal.style.display = "none";
+        userToDelete = null;
+    }
+
+    async function handleUserSubmit(e: Event) {
+        e.preventDefault();
+
+        const formData = new FormData(userForm);
+        const userData = {
+            email: formData.get("email") as string,
+            name: (formData.get("name") as string) || undefined,
+            password: formData.get("password") as string,
+            role: formData.get("role") as "USER" | "ADMIN",
+        };
+
+        // Basic validation
+        clearFormErrors();
+        let hasErrors = false;
+
+        if (!userData.email) {
+            showFieldError("email", "Email is required");
+            hasErrors = true;
+        }
+
+        if (!editingUser && !userData.password) {
+            showFieldError("password", "Password is required");
+            hasErrors = true;
+        }
+
+        if (userData.password && userData.password.length < 6) {
+            showFieldError(
+                "password",
+                "Password must be at least 6 characters",
+            );
+            hasErrors = true;
+        }
+
+        if (hasErrors) return;
+
+        try {
+            setSubmitLoading(true);
+
+            let response;
+            if (editingUser) {
+                // If there is no password, we do not include it in the update
+                const updateData: any = { ...userData };
+                if (!updateData.password) {
+                    delete updateData.password;
+                }
+                response = await apiService.updateUser(
+                    parseInt(editingUser.id),
+                    updateData,
+                );
+            } else {
+                response = await apiService.createUser(userData);
+            }
+
+            if (response.success) {
+                closeUserModal();
+                await loadUsers();
+                showNotification(
+                    editingUser
+                        ? "User updated successfully"
+                        : "User created successfully",
+                    "success",
+                );
+            } else {
+                showNotification(
+                    response.error || "Error processing request",
+                    "error",
+                );
+            }
+        } catch (error) {
+            console.error("Error submitting user:", error);
+            showNotification("Error processing request", "error");
+        } finally {
+            setSubmitLoading(false);
+        }
+    }
+
+    async function handleDeleteUser() {
+        if (!userToDelete) return;
+
+        try {
+            setDeleteLoading(true);
+
+            const response = await apiService.deleteUser(
+                parseInt(userToDelete.id),
+            );
+
+            if (response.success) {
+                closeDeleteModal();
+                await loadUsers();
+                showNotification("User deleted successfully", "success");
+            } else {
+                showNotification(
+                    response.error || "Error deleting user",
+                    "error",
+                );
+            }
+        } catch (error) {
+            console.error("Error deleting user:", error);
+            showNotification("Error deleting user", "error");
+        } finally {
+            setDeleteLoading(false);
+        }
+    }
+
+    function setSubmitLoading(loading: boolean) {
+        (submitBtn as HTMLButtonElement).disabled = loading;
+        submitText.style.display = loading ? "none" : "inline";
+        submitSpinner.style.display = loading ? "inline-block" : "none";
+    }
+
+    function setDeleteLoading(loading: boolean) {
+        (deleteConfirmBtn as HTMLButtonElement).disabled = loading;
+        deleteText.style.display = loading ? "none" : "inline";
+        deleteSpinner.style.display = loading ? "inline-block" : "none";
+    }
+
+    function clearFormErrors() {
+        const errorElements = document.querySelectorAll(".error-text");
+        errorElements.forEach((el) => (el.textContent = ""));
+
+        const inputElements = document.querySelectorAll(
+            ".form-group input, .form-group select",
+        );
+        inputElements.forEach((el) => el.classList.remove("error"));
+    }
+
+    function showFieldError(fieldName: string, message: string) {
+        const errorElement = document.getElementById(`${fieldName}-error`);
+        const inputElement = document.getElementById(fieldName);
+
+        if (errorElement) errorElement.textContent = message;
+        if (inputElement) inputElement.classList.add("error");
+    }
+
+    function showNotification(message: string, type: "success" | "error") {
+        // Create notification element
+        const notification = document.createElement("div");
+        notification.className = `notification notification-${type}`;
+        notification.textContent = message;
+
+        // Add to DOM
+        document.body.appendChild(notification);
+
+        // Show with animation
+        setTimeout(() => notification.classList.add("show"), 100);
+
+        // Remove after 3 seconds
+        setTimeout(() => {
+            notification.classList.remove("show");
+            setTimeout(() => document.body.removeChild(notification), 300);
+        }, 3000);
+    }
+
+    // Global functions for buttons
+    (window as any).editUser = (id: number) => {
+        const user = users.find((u) => parseInt(u.id) === id);
+        if (user) openUserModal(user);
+    };
+
+    (window as any).confirmDeleteUser = (id: number) => {
+        const user = users.find((u) => parseInt(u.id) === id);
+        if (user) openDeleteModal(user);
+    };
+</script>
+
+<style>
+    .users-content {
+        background-color: #f8fafc;
+        min-height: calc(100vh - 120px);
+        padding: 2rem;
+    }
+
+    .admin-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .admin-header h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #1a202c;
+        margin: 0;
+    }
+
+    .users-grid {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+
+    .loading {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 4rem;
+        color: #64748b;
+    }
+
+    .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid #e2e8f0;
+        border-top: 4px solid #3b82f6;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 1rem;
+    }
+
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    .error-message {
+        text-align: center;
+        padding: 4rem;
+        color: #dc2626;
+    }
+
+    .users-table-container {
+        overflow-x: auto;
+    }
+
+    .users-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .users-table th,
+    .users-table td {
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .users-table th {
+        background-color: #f8fafc;
+        font-weight: 600;
+        color: #374151;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .users-table td {
+        color: #1f2937;
+    }
+
+    .role-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .role-admin {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+
+    .role-user {
+        background-color: #dbeafe;
+        color: #1e40af;
+    }
+
+    .actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+    }
+
+    .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .btn-primary {
+        background-color: #3b82f6;
+        color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+        background-color: #2563eb;
+    }
+
+    .btn-secondary {
+        background-color: #6b7280;
+        color: white;
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+        background-color: #4b5563;
+    }
+
+    .btn-danger {
+        background-color: #dc2626;
+        color: white;
+    }
+
+    .btn-danger:hover:not(:disabled) {
+        background-color: #b91c1c;
+    }
+
+    .btn-sm {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.75rem;
+    }
+
+    .btn-sm svg {
+        width: 14px;
+        height: 14px;
+    }
+
+    /* Modal styles */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        animation: fadeIn 0.3s ease;
+    }
+
+    .modal-content {
+        background-color: white;
+        margin: 5% auto;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        animation: slideIn 0.3s ease;
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .modal-header h2 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1a202c;
+    }
+
+    .modal-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #6b7280;
+        padding: 0;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-close:hover {
+        color: #374151;
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: #374151;
+    }
+
+    .form-group input,
+    .form-group select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        transition: border-color 0.2s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .form-group input.error,
+    .form-group select.error {
+        border-color: #dc2626;
+    }
+
+    .error-text {
+        display: block;
+        margin-top: 0.25rem;
+        font-size: 0.75rem;
+        color: #dc2626;
+    }
+
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        padding: 1.5rem;
+        border-top: 1px solid #e2e8f0;
+        margin: 0 -1.5rem -1.5rem;
+    }
+
+    .warning {
+        color: #dc2626;
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
+    }
+
+    .btn-spinner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid transparent;
+        border-top: 2px solid currentColor;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    /* Notification styles */
+    .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 1rem 1.5rem;
+        border-radius: 6px;
+        color: white;
+        font-weight: 500;
+        z-index: 1001;
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+    }
+
+    .notification.show {
+        transform: translateX(0);
+    }
+
+    .notification-success {
+        background-color: #10b981;
+    }
+
+    .notification-error {
+        background-color: #dc2626;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .users-content {
+            padding: 1rem;
+        }
+
+        .admin-header {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: stretch;
+        }
+
+        .modal-content {
+            margin: 10% auto;
+            width: 95%;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+
+        .users-table {
+            font-size: 0.75rem;
+        }
+
+        .users-table th,
+        .users-table td {
+            padding: 0.5rem;
+        }
+    }
+</style>

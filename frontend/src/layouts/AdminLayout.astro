@@ -1,0 +1,215 @@
+---
+import Layout from "./Layout.astro";
+
+interface Props {
+    title: string;
+    activeSection?: string;
+    currentUser?: any;
+}
+
+const { title, activeSection, currentUser } = Astro.props;
+---
+
+<Layout title={title}>
+    <div class="admin-container">
+        <!-- Admin Header -->
+        <header class="admin-header">
+            <div class="admin-header-content">
+                <h1>Administration Panel</h1>
+                <div class="admin-user-info">
+                    <span class="user-name">{currentUser?.name}</span>
+                    <span class="user-role">{currentUser?.role}</span>
+                    <button id="logout-btn" class="logout-btn">Log Out</button>
+                </div>
+            </div>
+            <div class="admin-nav">
+                <a
+                    href="/admin"
+                    class={`nav-link ${activeSection === "dashboard" ? "active" : ""}`}
+                    >Dashboard</a
+                >
+                <a
+                    href="/admin/products"
+                    class={`nav-link ${activeSection === "products" ? "active" : ""}`}
+                    >Products</a
+                >
+                <a
+                    href="/admin/users"
+                    class={`nav-link ${activeSection === "users" ? "active" : ""}`}
+                    >Users</a
+                >
+                <a
+                    href="/admin/orders"
+                    class={`nav-link ${activeSection === "orders" ? "active" : ""}`}
+                    >Orders</a
+                >
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="admin-main">
+            <slot />
+        </main>
+    </div>
+</Layout>
+
+<style>
+    .admin-container {
+        min-height: 100vh;
+        background-color: #f8fafc;
+    }
+
+    .admin-header {
+        background: white;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 1rem 2rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        overflow: visible;
+    }
+
+    .admin-header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .admin-header h1 {
+        margin: 0;
+        color: #1a202c;
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+
+    .admin-user-info {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.25rem;
+        position: relative;
+        overflow: visible;
+    }
+
+    .logout-btn {
+        background-color: #e53e3e;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 0.375rem;
+        cursor: pointer;
+        font-weight: 500;
+        transition: background-color 0.2s;
+    }
+
+    .logout-btn:hover {
+        background-color: #c53030;
+    }
+
+    .logout-menu-item:hover {
+        background-color: #fed7d7;
+    }
+
+    .user-role {
+        font-size: 0.75rem;
+        color: #718096;
+        background-color: #edf2f7;
+        padding: 0.125rem 0.5rem;
+        border-radius: 0.25rem;
+    }
+
+    .admin-nav {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .nav-link {
+        padding: 0.5rem 1rem;
+        text-decoration: none;
+        color: #4a5568;
+        border-radius: 0.375rem;
+        transition: all 0.2s;
+        font-weight: 500;
+    }
+
+    .nav-link:hover {
+        background-color: #edf2f7;
+        color: #2d3748;
+    }
+
+    .nav-link.active {
+        background-color: #3182ce;
+        color: white;
+    }
+
+    .logout-btn {
+        padding: 0.5rem 1rem;
+        background-color: #e53e3e;
+        color: white;
+        border: none;
+        border-radius: 0.375rem;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        font-weight: 500;
+    }
+
+    .logout-btn:hover {
+        background-color: #c53030;
+    }
+
+    .admin-main {
+        padding: 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    @media (max-width: 768px) {
+        .admin-header {
+            padding: 1rem;
+        }
+
+        .admin-header-content {
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .admin-user-info {
+            align-items: center;
+        }
+
+        .admin-nav {
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .nav-link {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+        }
+
+        .admin-main {
+            padding: 1rem;
+        }
+    }
+</style>
+
+<script>
+    import { logout } from "../middleware/auth";
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const logoutBtn = document.getElementById("logout-btn");
+
+        // Logout functionality
+        if (logoutBtn) {
+            logoutBtn.addEventListener("click", () => {
+                // Use the logout function from the middleware that handles both cookies and localStorage
+                logout();
+            });
+        }
+    });
+</script>

@@ -1,0 +1,947 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+---
+
+<AdminLayout title="Order Management">
+    <div class="orders-container">
+        <div class="orders-header">
+            <h1>Order Management</h1>
+            <div class="orders-stats">
+                <div class="stat-card">
+                    <span class="stat-number" id="total-orders">0</span>
+                    <span class="stat-label">Total Orders</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number" id="pending-orders">0</span>
+                    <span class="stat-label">Pending</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number" id="completed-orders">0</span>
+                    <span class="stat-label">Completed</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="orders-filters">
+            <div class="filter-group">
+                <label for="status-filter">Status:</label>
+                <select id="status-filter">
+                    <option value="">All statuses</option>
+                    <option value="PENDING">Pending</option>
+                    <option value="PAID">Paid</option>
+                    <option value="CANCELLED">Cancelled</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="search-input">Search:</label>
+                <input
+                    type="text"
+                    id="search-input"
+                    placeholder="Order ID, user or email..."
+                />
+            </div>
+
+            <button id="apply-filters" class="btn btn-primary"
+                >Apply Filters</button
+            >
+        </div>
+
+        <div class="orders-table-container">
+            <div
+                id="loading-spinner"
+                class="loading-spinner"
+                style="display: none;"
+            >
+                <div class="spinner"></div>
+                <span>Loading orders...</span>
+            </div>
+
+            <table class="orders-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>User</th>
+                        <th>Email</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="orders-tbody">
+                    <!-- Orders will be loaded here dynamically -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pagination">
+            <button id="prev-page" class="btn btn-secondary">Previous</button>
+            <span id="page-info">Page 1 of 1</span>
+            <button id="next-page" class="btn btn-secondary">Next</button>
+        </div>
+    </div>
+
+    <!-- Order Detail Modal -->
+    <div id="order-detail-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Order Details</h2>
+                <span id="close-detail-modal" class="close">&times;</span>
+            </div>
+            <div class="modal-body" id="order-detail-content">
+                <!-- Content will be loaded dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Update Modal -->
+    <div id="status-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Update Order Status</h2>
+                <span id="close-status-modal" class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="new-status">New Status:</label>
+                    <select id="new-status">
+                        <option value="PENDING">Pending</option>
+                        <option value="PAID">Paid</option>
+                        <option value="CANCELLED">Cancelled</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button id="cancel-status-update" class="btn btn-secondary"
+                        >Cancel</button
+                    >
+                    <button id="update-status-btn" class="btn btn-primary"
+                        >Update</button
+                    >
+                </div>
+            </div>
+        </div>
+    </div>
+</AdminLayout>
+
+<style>
+    .orders-container {
+        padding: 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .orders-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .orders-header h1 {
+        color: #333;
+        margin: 0;
+    }
+
+    .orders-stats {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 1rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        min-width: 120px;
+    }
+
+    .stat-number {
+        display: block;
+        font-size: 2rem;
+        font-weight: bold;
+        color: #007bff;
+    }
+
+    .stat-label {
+        display: block;
+        font-size: 0.875rem;
+        color: #666;
+        margin-top: 0.25rem;
+    }
+
+    .orders-filters {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+        display: flex;
+        gap: 1rem;
+        align-items: end;
+        flex-wrap: wrap;
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .filter-group label {
+        font-weight: 500;
+        color: #333;
+    }
+
+    .filter-group select,
+    .filter-group input {
+        padding: 0.5rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 0.875rem;
+    }
+
+    .orders-table-container {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        overflow-x: auto;
+        margin-bottom: 2rem;
+        position: relative;
+    }
+
+    .loading-spinner {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        z-index: 10;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 2rem;
+        border-radius: 8px;
+    }
+
+    .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #007bff;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    .orders-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .orders-table th,
+    .orders-table td {
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+    }
+
+    .orders-table th {
+        background: #f8f9fa;
+        font-weight: 600;
+        color: #333;
+    }
+
+    .orders-table tr:hover {
+        background: #f8f9fa;
+    }
+
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-transform: uppercase;
+    }
+
+    .status-pending {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .status-paid {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .status-cancelled {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .btn {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.875rem;
+        transition: background-color 0.2s;
+    }
+
+    .btn-primary {
+        background: #007bff;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #0056b3;
+    }
+
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background: #545b62;
+    }
+
+    .btn-secondary:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+    }
+
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    .btn-info {
+        background: #17a2b8;
+        color: white;
+    }
+
+    .btn-info:hover {
+        background: #138496;
+    }
+
+    .btn-warning {
+        background: #ffc107;
+        color: #212529;
+    }
+
+    .btn-warning:hover {
+        background: #e0a800;
+    }
+
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 8px;
+        max-width: 600px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem;
+        border-bottom: 1px solid #eee;
+    }
+
+    .modal-header h2 {
+        margin: 0;
+        color: #333;
+    }
+
+    .close {
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #999;
+    }
+
+    .close:hover {
+        color: #333;
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+    }
+
+    .form-group {
+        margin-bottom: 1rem;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: #333;
+    }
+
+    .form-group select {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+
+    .modal-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        margin-top: 1.5rem;
+    }
+
+    .order-detail {
+        line-height: 1.6;
+    }
+
+    .order-detail h3 {
+        color: #333;
+        margin-bottom: 1rem;
+    }
+
+    .order-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .info-item {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 4px;
+    }
+
+    .info-label {
+        font-weight: 500;
+        color: #666;
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+
+    .info-value {
+        color: #333;
+    }
+
+    .order-items {
+        margin-top: 2rem;
+    }
+
+    .item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        border: 1px solid #eee;
+        border-radius: 4px;
+        margin-bottom: 0.5rem;
+    }
+
+    .item-info {
+        flex: 1;
+    }
+
+    .item-name {
+        font-weight: 500;
+        color: #333;
+    }
+
+    .item-details {
+        font-size: 0.875rem;
+        color: #666;
+        margin-top: 0.25rem;
+    }
+
+    .item-total {
+        font-weight: 500;
+        color: #007bff;
+    }
+
+    @media (max-width: 768px) {
+        .orders-container {
+            padding: 1rem;
+        }
+
+        .orders-header {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .orders-stats {
+            justify-content: center;
+        }
+
+        .orders-filters {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .filter-group {
+            width: 100%;
+        }
+
+        .orders-table {
+            font-size: 0.875rem;
+        }
+
+        .modal-content {
+            width: 95%;
+            margin: 1rem;
+        }
+
+        .order-info {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<script>
+    import { apiService } from "../../services/api";
+
+    // TypeScript Interfaces
+    interface Order {
+        id: number;
+        user: {
+            name: string;
+            email: string;
+        };
+        total: number;
+        status: string;
+        createdAt: string;
+        items: OrderItem[];
+    }
+
+    interface OrderItem {
+        id: number;
+        quantity: number;
+        price: number;
+        product: {
+            name: string;
+        };
+    }
+
+    interface Pagination {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+    }
+
+    function showNotification(message: string, type: string = "info"): void {
+        console.log(`${type.toUpperCase()}: ${message}`);
+    }
+
+    class OrdersManager {
+        apiService: any;
+        orders: Order[];
+        pagination: Pagination;
+        currentPage: number;
+        currentLimit: number;
+        currentStatus: string;
+        currentSearch: string;
+        currentOrderId: number | null;
+        searchTimeout: ReturnType<typeof setTimeout> | null;
+
+        constructor() {
+            this.apiService = apiService;
+            this.orders = [];
+            this.pagination = { page: 1, limit: 10, total: 0, totalPages: 1 };
+            this.currentPage = 1;
+            this.currentLimit = 10;
+            this.currentStatus = "";
+            this.currentSearch = "";
+            this.currentOrderId = null;
+            this.searchTimeout = null;
+            this.init();
+        }
+
+        init() {
+            this.setupEventListeners();
+            this.loadOrders();
+        }
+
+        setupEventListeners() {
+            const statusFilter = document.getElementById(
+                "status-filter",
+            ) as HTMLSelectElement;
+            if (statusFilter) {
+                statusFilter.addEventListener("change", (e) => {
+                    const target = e.target as HTMLSelectElement;
+                    this.currentStatus = target.value;
+                    this.currentPage = 1;
+                    this.loadOrders();
+                });
+            }
+
+            const searchInput = document.getElementById(
+                "search-input",
+            ) as HTMLInputElement;
+            if (searchInput) {
+                searchInput.addEventListener("input", (e) => {
+                    if (this.searchTimeout) {
+                        clearTimeout(this.searchTimeout);
+                    }
+                    const target = e.target as HTMLInputElement;
+                    this.currentSearch = target?.value || "";
+                    this.currentPage = 1;
+                    this.searchTimeout = setTimeout(() => {
+                        this.loadOrders();
+                    }, 500);
+                });
+            }
+
+            const applyFilters = document.getElementById("apply-filters");
+            if (applyFilters) {
+                applyFilters.addEventListener("click", () => {
+                    const statusFilterEl = document.getElementById(
+                        "status-filter",
+                    ) as HTMLSelectElement;
+                    const searchInputEl = document.getElementById(
+                        "search-input",
+                    ) as HTMLInputElement;
+                    if (statusFilterEl)
+                        this.currentStatus = statusFilterEl.value;
+                    if (searchInputEl) this.currentSearch = searchInputEl.value;
+                    this.currentPage = 1;
+                    this.loadOrders();
+                });
+            }
+
+            const prevPage = document.getElementById(
+                "prev-page",
+            ) as HTMLButtonElement;
+            if (prevPage) {
+                prevPage.addEventListener("click", () => {
+                    if (this.currentPage > 1) {
+                        this.currentPage--;
+                        this.loadOrders();
+                    }
+                });
+            }
+
+            const nextPage = document.getElementById(
+                "next-page",
+            ) as HTMLButtonElement;
+            if (nextPage) {
+                nextPage.addEventListener("click", () => {
+                    if (this.currentPage < this.pagination.totalPages) {
+                        this.currentPage++;
+                        this.loadOrders();
+                    }
+                });
+            }
+
+            const closeDetailModal =
+                document.getElementById("close-detail-modal");
+            if (closeDetailModal) {
+                closeDetailModal.addEventListener("click", () => {
+                    const modal = document.getElementById("order-detail-modal");
+                    if (modal) modal.style.display = "none";
+                });
+            }
+
+            const closeStatusModal =
+                document.getElementById("close-status-modal");
+            if (closeStatusModal) {
+                closeStatusModal.addEventListener("click", () => {
+                    const modal = document.getElementById("status-modal");
+                    if (modal) modal.style.display = "none";
+                });
+            }
+
+            const cancelStatusUpdate = document.getElementById(
+                "cancel-status-update",
+            );
+            if (cancelStatusUpdate) {
+                cancelStatusUpdate.addEventListener("click", () => {
+                    const modal = document.getElementById("status-modal");
+                    if (modal) modal.style.display = "none";
+                });
+            }
+
+            const updateStatusBtn =
+                document.getElementById("update-status-btn");
+            if (updateStatusBtn) {
+                updateStatusBtn.addEventListener("click", () => {
+                    window.ordersManager.updateOrderStatus();
+                });
+            }
+        }
+
+        async loadOrders() {
+            try {
+                const loadingSpinner =
+                    document.getElementById("loading-spinner");
+                if (loadingSpinner) loadingSpinner.style.display = "flex";
+
+                const response = await this.apiService.getAllOrders({
+                    page: this.currentPage,
+                    limit: this.currentLimit,
+                    ...(this.currentStatus && { status: this.currentStatus }),
+                    ...(this.currentSearch && { search: this.currentSearch }),
+                });
+
+                // The response is wrapped in an ApiResponse object
+                if (response.success && response.data) {
+                    this.orders = response.data.orders || [];
+                    this.pagination = response.data.pagination || {
+                        page: 1,
+                        limit: 10,
+                        total: 0,
+                        totalPages: 1,
+                    };
+                } else {
+                    this.orders = [];
+                    this.pagination = {
+                        page: 1,
+                        limit: 10,
+                        total: 0,
+                        totalPages: 1,
+                    };
+                }
+
+                this.renderOrders();
+                this.updatePagination();
+            } catch (error) {
+                console.error("Error loading orders:", error);
+                showNotification("Error loading orders", "error");
+                this.orders = [];
+                this.pagination = {
+                    page: 1,
+                    limit: 10,
+                    total: 0,
+                    totalPages: 1,
+                };
+                this.renderOrders();
+                this.updatePagination();
+            } finally {
+                const loadingSpinner =
+                    document.getElementById("loading-spinner");
+                if (loadingSpinner) loadingSpinner.style.display = "none";
+            }
+        }
+
+        renderOrders() {
+            const tbody = document.getElementById("orders-tbody");
+            if (!tbody) return;
+
+            if (!this.orders || this.orders.length === 0) {
+                tbody.innerHTML =
+                    '<tr><td colspan="7" style="text-align: center; padding: 2rem;">No orders found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = this.orders
+                .map(
+                    (order: Order) => `
+        <tr>
+          <td>#${order.id}</td>
+          <td>${order.user.name}</td>
+          <td>${order.user.email}</td>
+          <td>$${order.total.toFixed(2)}</td>
+          <td><span class="status-badge status-${order.status.toLowerCase()}">${this.getStatusLabel(order.status)}</span></td>
+          <td>${new Date(order.createdAt).toLocaleDateString()}</td>
+          <td>
+            <button class="btn btn-info btn-sm" onclick="ordersManager.showOrderDetail(${order.id})">View</button>
+            <button class="btn btn-warning btn-sm" onclick="ordersManager.openStatusModal(${order.id}, '${order.status}')">Status</button>
+          </td>
+        </tr>
+      `,
+                )
+                .join("");
+        }
+
+        updatePagination(): void {
+            const prevBtn = document.getElementById(
+                "prev-page",
+            ) as HTMLButtonElement;
+            const nextBtn = document.getElementById(
+                "next-page",
+            ) as HTMLButtonElement;
+            const pageInfo = document.getElementById("page-info");
+
+            if (prevBtn) prevBtn.disabled = this.currentPage <= 1;
+            if (nextBtn)
+                nextBtn.disabled =
+                    this.currentPage >= this.pagination.totalPages;
+            if (pageInfo)
+                pageInfo.textContent = `Page ${this.currentPage} of ${this.pagination.totalPages}`;
+        }
+
+        async showOrderDetail(orderId: number): Promise<void> {
+            try {
+                const response = await this.apiService.getOrderById(orderId);
+                const order = response.data;
+
+                const modalContent = document.getElementById(
+                    "order-detail-content",
+                );
+                if (!modalContent) return;
+
+                modalContent.innerHTML = `
+          <div class="order-detail">
+            <div class="order-info">
+              <div class="info-item">
+                <span class="info-label">Order ID:</span>
+                <span class="info-value">#${order.id}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Customer:</span>
+                <span class="info-value">${order.user.name}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Email:</span>
+                <span class="info-value">${order.user.email}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Status:</span>
+                <span class="info-value"><span class="status-badge status-${order.status.toLowerCase()}">${this.getStatusLabel(order.status)}</span></span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Total:</span>
+                <span class="info-value">$${order.total.toFixed(2)}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Date:</span>
+                <span class="info-value">${new Date(order.createdAt).toLocaleString()}</span>
+              </div>
+            </div>
+
+            <div class="order-items">
+              <h3>Order Products</h3>
+              ${order.items
+                  .map(
+                      (item: OrderItem) => `
+                <div class="item">
+                  <div class="item-info">
+                    <div class="item-name">${item.product.name}</div>
+                    <div class="item-details">Quantity: ${item.quantity} × $${item.price.toFixed(2)}</div>
+                  </div>
+                  <div class="item-total">$${(item.quantity * item.price).toFixed(2)}</div>
+                </div>
+              `,
+                  )
+                  .join("")}
+            </div>
+          </div>
+        `;
+
+                const modal = document.getElementById("order-detail-modal");
+                if (modal) modal.style.display = "flex";
+            } catch (error) {
+                console.error("Error loading order details:", error);
+                showNotification("Error loading order details", "error");
+            }
+        }
+
+        openStatusModal(orderId: number, currentStatus: string): void {
+            this.currentOrderId = orderId;
+            const statusSelect = document.getElementById(
+                "new-status",
+            ) as HTMLSelectElement;
+            if (statusSelect) statusSelect.value = currentStatus;
+
+            const modal = document.getElementById("status-modal");
+            if (modal) modal.style.display = "flex";
+        }
+
+        async updateOrderStatus(): Promise<void> {
+            if (!this.currentOrderId) return;
+
+            try {
+                const newStatusSelect = document.getElementById(
+                    "new-status",
+                ) as HTMLSelectElement;
+                if (!newStatusSelect) return;
+                const newStatus = newStatusSelect.value;
+
+                console.log("Updating order status:", {
+                    orderId: this.currentOrderId,
+                    newStatus,
+                });
+                const response = await this.apiService.updateOrderStatus(
+                    this.currentOrderId,
+                    newStatus,
+                );
+                console.log("Update response:", response);
+
+                if (response.success) {
+                    showNotification(
+                        "Order status updated successfully",
+                        "success",
+                    );
+
+                    const modal = document.getElementById("status-modal");
+                    if (modal) modal.style.display = "none";
+
+                    this.loadOrders();
+                } else {
+                    console.error("API Error:", response.error);
+                    showNotification(
+                        response.error || "Error updating order status",
+                        "error",
+                    );
+                }
+            } catch (error) {
+                console.error("Error updating order status:", error);
+                showNotification("Error updating order status", "error");
+            }
+        }
+
+        getStatusLabel(status: string): string {
+            const statusLabels: { [key: string]: string } = {
+                PENDING: "Pending",
+                PAID: "Paid",
+                CANCELLED: "Cancelled",
+            };
+            return statusLabels[status] || status;
+        }
+    }
+
+    // Declare the property on window
+    declare global {
+        interface Window {
+            ordersManager: OrdersManager;
+        }
+    }
+
+    window.ordersManager = new OrdersManager();
+</script>

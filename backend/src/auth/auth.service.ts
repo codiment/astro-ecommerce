@@ -40,18 +40,20 @@ export class AuthService {
       role: newUser.role,
     };
 
-
-    this.emailService.sendWelcomeEmail(newUser.email, newUser.name || '')
-      .then(success => {
+    this.emailService
+      .sendWelcomeEmail(newUser.email, newUser.name || '')
+      .then((success) => {
         if (success) {
-          this.logger.log(`Welcome email sent to ${newUser.email}`)
+          this.logger.log(`Welcome email sent to ${newUser.email}`);
         } else {
-              this.logger.warn(`Failed to send welcome email to ${newUser.email}`)
-            }
+          this.logger.warn(`Failed to send welcome email to ${newUser.email}`);
+        }
       })
-      .catch(error => {
-        this.logger.error(`Failed to send welcome email to ${newUser.email}: ${error.message}`)
-      })
+      .catch((error) => {
+        this.logger.error(
+          `Failed to send welcome email to ${newUser.email}: ${error.message}`,
+        );
+      });
 
     return {
       message: 'User registered successfully',
@@ -101,5 +103,19 @@ export class AuthService {
     }
 
     return user;
+  }
+
+  async getMe(userId: number) {
+    const user = await this.userService.findOne(userId);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+    };
   }
 }

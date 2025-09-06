@@ -7,10 +7,10 @@ import * as os from 'os';
   imports: [
     PinoLoggerModule.forRoot({
       pinoHttp: {
-        // Nivel de logging según ambiente
+        // Logging level according to environment
         level: process.env.NODE_ENV !== 'production' ? 'debug' : 'info',
 
-        // Transporte para desarrollo (pino-pretty)
+        // Transport for development (pino-pretty)
         transport:
           process.env.NODE_ENV !== 'production'
             ? {
@@ -24,7 +24,7 @@ import * as os from 'os';
               }
             : undefined,
 
-        // Serializadores personalizados
+        // Custom serializers
         serializers: {
           req: (req: IncomingMessage & { ip?: string; hostname?: string }) => ({
             method: req.method || 'UNKNOWN',
@@ -40,7 +40,7 @@ import * as os from 'os';
           }),
         },
 
-        // Nivel de log dinámico según status code
+        // Dynamic log level according to status code
         customLogLevel: (
           req: IncomingMessage,
           res: ServerResponse,
@@ -56,7 +56,7 @@ import * as os from 'os';
           return 'info';
         },
 
-        // Mensajes personalizados
+        // Custom messages
         customSuccessMessage: (req: IncomingMessage, res: ServerResponse) => {
           if (res.statusCode === 404) {
             return `🔍 Resource not found`;
@@ -72,39 +72,39 @@ import * as os from 'os';
           return `❌ ${req.method || 'UNKNOWN'} ${req.url || ''} - ${err.message}`;
         },
 
-        // Timestamp para producción
+        // Timestamp for production
         timestamp:
           process.env.NODE_ENV === 'production'
             ? () => `,"time":"${new Date().toISOString()}"`
             : undefined,
 
-        // Información base del contexto
+        // Base context information
         base: {
           pid: process.pid,
           hostname: os.hostname(),
           env: process.env.NODE_ENV || 'development',
         },
 
-        // ✅ Configuración adicional para filtrar warnings
+        // ✅ Additional configuration to filter warnings
         hooks: {
           logMethod(
             inputArgs: unknown[],
             method: (...args: unknown[]) => void,
             level: number,
           ): void {
-            // Filtrar warning específico de path-to-regexp
+            // Filter specific warning from path-to-regexp
             if (
               level === 40 &&
               typeof inputArgs[0] === 'string' &&
               inputArgs[0].includes('Unsupported route path')
             ) {
-              return; // No loggear este warning
+              return; // Do not log this warning
             }
             method.apply(this, inputArgs);
           },
         },
 
-        // Configuración de formateo
+        // Formatting configuration
         formatters: {
           level: (label) => ({ level: label.toUpperCase() }),
         },

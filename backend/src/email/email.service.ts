@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Resend } from 'resend';
+import type { CreateEmailOptions } from 'resend';
 
 export interface EmailOptions {
   to: string | string[];
@@ -29,10 +30,13 @@ export class EmailService {
 
   constructor(private configService: ConfigService) {
     const apiKey = this.configService.get<string>('RESEND_API_KEY');
-    this.fromEmail = this.configService.get<string>('FROM_EMAIL') || 'onboarding@resend.dev';
-    
+    this.fromEmail =
+      this.configService.get<string>('FROM_EMAIL') || 'onboarding@resend.dev';
+
     if (!apiKey) {
-      this.logger.warn('RESEND_API_KEY not found. Email service will not work.');
+      this.logger.warn(
+        'RESEND_API_KEY not found. Email service will not work.',
+      );
       return;
     }
 
@@ -52,20 +56,13 @@ export class EmailService {
     }
 
     try {
-      const emailData: any = {
+      const emailData: CreateEmailOptions = {
         from: options.from || this.fromEmail,
         to: options.to,
         subject: options.subject,
-      };
-
-      // Solo agregar las propiedades que estén definidas
-      if (options.html) {
-        emailData.html = options.html;
-      }
-      
-      if (options.text) {
-        emailData.text = options.text;
-      }
+        ...(options.html && { html: options.html }),
+        ...(options.text && { text: options.text }),
+      } as CreateEmailOptions;
 
       const { data, error } = await this.resend.emails.send(emailData);
 
@@ -76,54 +73,62 @@ export class EmailService {
 
       this.logger.log(`Email sent successfully. ID: ${data?.id}`);
       return true;
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error('Failed to send email:', error);
       return false;
     }
   }
 
   async sendWelcomeEmail(email: string, name: string): Promise<boolean> {
-    const text = `Hola ${name},
+    const text = `Hello ${name},
 
-Gracias por registrarte en nuestro E-commerce. Estamos emocionados de tenerte como parte de nuestra comunidad.
+Thank you for registering at our E-commerce. We are excited to have you as part of our community.
 
-Ahora puedes:
-- Explorar nuestros productos
-- Agregar items a tu carrito
-- Realizar compras seguras
+Now you can:
+- Explore our products
+- Add items to your cart
+- Make secure purchases
 
-¡Feliz compra!
-El equipo de E-commerce`;
+Happy shopping!
+The E-commerce Team`;
 
     return this.sendEmail({
       to: email,
-      subject: '¡Bienvenido a nuestro E-commerce!',
+      subject: 'Welcome to our E-commerce!',
       text,
     });
   }
 
-  async sendOrderConfirmationEmail(email: string, orderData: OrderEmailData): Promise<boolean> {
+  async sendOrderConfirmationEmail(
+    email: string,
+    orderData: OrderEmailData,
+  ): Promise<boolean> {
     const itemsList = orderData.items
-      .map(item => `- ${item.title} x${item.quantity} - $${(item.quantity * item.price).toFixed(2)}`)
+      .map(
+        (item) =>
+          `- ${item.title} x${item.quantity} - $${(
+            item.quantity * item.price
+          ).toFixed(2)}`,
+      )
       .join('\n');
 
-    const text = `Hola ${orderData.customerName},
+    const text = `Hello ${orderData.customerName},
 
-Tu pedido #${orderData.orderId} ha sido confirmado y está siendo procesado.
+Your order #${orderData.orderId} has been confirmed and is being processed.
 
-Detalles del pedido:
+Order details:
 ${itemsList}
 
 Total: $${orderData.orderTotal.toFixed(2)}
 
-Te notificaremos cuando tu pedido sea enviado.
+We will notify you when your order is shipped.
 
-¡Gracias por tu compra!
-El equipo de E-commerce`;
+Thank you for your purchase!
+The E-commerce Team`;
 
     return this.sendEmail({
       to: email,
-      subject: `Confirmación de Pedido #${orderData.orderId}`,
+      subject: `Order Confirmation #${orderData.orderId}`,
       text,
     });
   }
@@ -134,31 +139,32 @@ El equipo de E-commerce`;
     orderId: number,
     status: string,
   ): Promise<boolean> {
-    const statusMessages = {
-      PAID: 'Tu pedido ha sido pagado exitosamente',
-      CANCELLED: 'Tu pedido ha sido cancelado',
-      SHIPPED: 'Tu pedido ha sido enviado',
-      DELIVERED: 'Tu pedido ha sido entregado',
+    const statusMessages: { [key: string]: string } = {
+      PAID: 'Your order has been paid successfully',
+      CANCELLED: 'Your order has been cancelled',
+      SHIPPED: 'Your order has been shipped',
+      DELIVERED: 'Your order has been delivered',
     };
 
-    const message = statusMessages[status] || `El estado de tu pedido ha cambiado a: ${status}`;
+    const message =
+      statusMessages[status] ||
+      `The status of your order has changed to: ${status}`;
 
-    const text = `Hola ${customerName},
+    const text = `Hello ${customerName},
 
 ${message}
 
-Pedido #${orderId}
+Order #${orderId}
 
-Puedes revisar el estado completo de tu pedido en tu cuenta.
+You can check the full status of your order in your account.
 
-¡Gracias por elegirnos!
-El equipo de E-commerce`;
+Thank you for choosing us!
+The E-commerce Team`;
 
     return this.sendEmail({
       to: email,
-      subject: `Actualización de Pedido #${orderId}`,
+      subject: `Order Update #${orderId}`,
       text,
     });
   }
 }
-

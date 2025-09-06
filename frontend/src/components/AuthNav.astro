@@ -1,0 +1,165 @@
+---
+// Navigation component that updates according to the authentication status
+---
+
+<nav id="authNav" class="flex items-center space-x-4">
+    <!-- Unauthenticated state -->
+    <div id="unauthenticatedNav" class="flex items-center space-x-4">
+        <a
+            href="/login"
+            class="text-stone-900 hover:text-stone-700 px-3 py-2 rounded-md text-sm font-medium"
+        >
+            Login
+        </a>
+        <a
+            href="/register"
+            class="group px-4 py-2 bg-stone-900/5 backdrop-blur-sm text-stone-800 font-semibold rounded-xl border border-stone-300/30 transition-all duration-300 hover:bg-stone-900/10"
+        >
+            Register
+        </a>
+    </div>
+
+    <!-- Authenticated state -->
+    <div id="authenticatedNav" class="hidden flex items-center space-x-4">
+        <div class="relative" id="userDropdown">
+            <button
+                id="userMenuButton"
+                class="flex items-center text-stone-900 hover:text-stone-700 px-3 py-2 rounded-md text-sm font-medium cursor-pointer"
+            >
+                <span id="userName">User</span>
+                <svg
+                    class="ml-1 h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
+
+            <div
+                id="userMenu"
+                class="hidden absolute right-0 mt-2 w-48 bg-stone-50 rounded-md shadow-md py-1 z-50"
+            >
+                <a
+                    href="/profile"
+                    class="block px-4 py-2 text-sm text-stone-700 hover:bg-stone-100"
+                >
+                    My Profile
+                </a>
+                <a
+                    href="/orders"
+                    class="block px-4 py-2 text-sm text-stone-700 hover:bg-stone-100"
+                >
+                    My Orders
+                </a>
+                <button
+                    id="logoutBtn"
+                    class="block w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-100"
+                >
+                    Log Out
+                </button>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<script>
+    import { apiService } from "../services/api";
+    import { logout } from "../middleware/auth";
+
+    const unauthenticatedNav = document.getElementById("unauthenticatedNav")!;
+    const authenticatedNav = document.getElementById("authenticatedNav")!;
+    const userName = document.getElementById("userName")!;
+    const userMenuButton = document.getElementById("userMenuButton")!;
+    const userMenu = document.getElementById("userMenu")!;
+    const logoutBtn = document.getElementById("logoutBtn")!;
+
+    // Function to update the UI according to the authentication status
+    async function updateAuthState() {
+        if (apiService.isAuthenticated()) {
+            try {
+                const response = await apiService.getCurrentUser();
+
+                if (response.success && response.data) {
+                    // Show authenticated navigation
+                    showAuthenticatedNav();
+
+                    // Update user name
+                    userName.textContent = response.data.name;
+                } else {
+                    // Invalid token, clear and show unauthenticated navigation
+                    apiService.removeToken();
+                    showUnauthenticatedNav();
+                }
+            } catch (error) {
+                // Error getting user, clear token
+                apiService.removeToken();
+                showUnauthenticatedNav();
+            }
+        } else {
+            showUnauthenticatedNav();
+        }
+    }
+
+    function showUnauthenticatedNav() {
+        if (authenticatedNav) {
+            authenticatedNav.classList.add("hidden");
+            authenticatedNav.classList.remove("flex");
+        }
+        if (unauthenticatedNav) {
+            unauthenticatedNav.classList.remove("hidden");
+            unauthenticatedNav.classList.add("flex");
+        }
+    }
+
+    function showAuthenticatedNav() {
+        if (unauthenticatedNav) {
+            unauthenticatedNav.classList.add("hidden");
+            unauthenticatedNav.classList.remove("flex");
+        }
+        if (authenticatedNav) {
+            authenticatedNav.classList.remove("hidden");
+            authenticatedNav.classList.add("flex");
+        }
+    }
+
+    // Toggle user menu
+    if (userMenuButton && userMenu) {
+        userMenuButton.addEventListener("click", (e) => {
+            e.stopPropagation();
+            userMenu.classList.toggle("hidden");
+        });
+
+        // Close menu on outside click
+        document.addEventListener("click", () => {
+            userMenu.classList.add("hidden");
+        });
+
+        // Prevent the menu from closing when clicking inside
+        userMenu.addEventListener("click", (e) => {
+            e.stopPropagation();
+        });
+    }
+
+    // Logout
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", () => {
+            logout();
+        });
+    }
+
+    // Update status on page load
+    updateAuthState();
+
+    // Listen for changes in localStorage (to sync between tabs)
+    window.addEventListener("storage", (e) => {
+        if (e.key === "auth_token") {
+            updateAuthState();
+        }
+    });
+</script>

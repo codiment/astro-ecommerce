@@ -8,6 +8,43 @@ import {
 import { PrismaService } from 'src/prisma/prisma.service';
 import { EmailService, OrderEmailData } from 'src/email/email.service';
 
+// Types for Order with relations
+interface OrderWithRelations {
+  id: number;
+  userId: number;
+  total: number;
+  status: string;
+  createdAt: Date;
+  user: {
+    id: number;
+    name: string | null;
+    email: string;
+  };
+  items: Array<{
+    id: number;
+    productId: number;
+    quantity: number;
+    price: number;
+    product: {
+      id: number;
+      title: string;
+      price: number;
+      image: string | null;
+    };
+  }>;
+}
+
+interface OrderSearchWhere {
+  status?: 'PENDING' | 'PAID' | 'CANCELLED';
+  OR?: Array<{
+    id?: { equals: number };
+    user?: {
+      name?: { contains: string; mode: 'insensitive' };
+      email?: { contains: string; mode: 'insensitive' };
+    };
+  }>;
+}
+
 @Injectable()
 export class OrderService {
   private readonly logger = new Logger(OrderService.name);
@@ -45,7 +82,7 @@ export class OrderService {
         });
         if (update.count === 0) {
           throw new BadRequestException(
-            `Stock insuficiente para "${item.product.title}".`
+            `Stock insuficiente para "${item.product.title}".`,
           );
         }
       }
@@ -84,20 +121,20 @@ export class OrderService {
       });
 
       // 6- Enviar email de confirmación (fuera de la transacción)
-      this.sendOrderConfirmationEmail(order);
+      void this.sendOrderConfirmationEmail(order);
 
       return order;
     });
   }
 
-  private async sendOrderConfirmationEmail(order) {
+  private sendOrderConfirmationEmail(order: OrderWithRelations): void {
     try {
       // Preparar los datos para el email
       const emailData: OrderEmailData = {
-        customerName: order.user.name,
+        customerName: order.user.name || 'Cliente',
         orderId: order.id,
         orderTotal: order.total,
-        items: order.items.map(item => ({
+        items: order.items.map((item) => ({
           title: item.product.title,
           quantity: item.quantity,
           price: item.price,
@@ -105,19 +142,28 @@ export class OrderService {
       };
 
       // Enviar email de forma no bloqueante
-      this.emailService.sendOrderConfirmationEmail(order.user.email, emailData)
-        .then(success => {
+      void this.emailService
+        .sendOrderConfirmationEmail(order.user.email, emailData)
+        .then((success) => {
           if (success) {
-            this.logger.log(`Order confirmation email sent for order #${order.id}`);
+            this.logger.log(
+              `Order confirmation email sent for order #${order.id}`,
+            );
           } else {
-            this.logger.warn(`Failed to send order confirmation email for order #${order.id}`);
+            this.logger.warn(
+              `Failed to send order confirmation email for order #${order.id}`,
+            );
           }
         })
-        .catch(error => {
-          this.logger.error(`Error sending order confirmation email: ${error.message}`);
+        .catch((error) => {
+          this.logger.error(
+            `Error sending order confirmation email: ${(error as Error)?.message || 'Unknown error'}`,
+          );
         });
     } catch (error) {
-      this.logger.error(`Error preparing order confirmation email: ${error.message}`);
+      this.logger.error(
+        `Error preparing order confirmation email: ${(error as Error)?.message || 'Unknown error'}`,
+      );
     }
   }
 
@@ -191,21 +237,177 @@ export class OrderService {
     });
 
     // Enviar email de actualización de estado (no bloqueante)
-    this.emailService.sendOrderStatusUpdateEmail(
-      order.user.email,
-      order.user.name ?? 'Cliente',
-      orderId,
-      newStatus
-    )
-      .then(success => {
+    void this.emailService
+      .sendOrderStatusUpdateEmail(
+        order.user.email,
+        order.user.name ?? 'Cliente',
+        orderId,
+        newStatus,
+      )
+      .then((success) => {
         if (success) {
-          this.logger.log(`Order status update email sent for order #${orderId}`);
+          this.logger.log(
+            `Order status update email sent for order #${orderId}`,
+          );
         } else {
-          this.logger.warn(`Failed to send order status update email for order #${orderId}`);
+          this.logger.warn(
+            `Failed to send order status update email for order #${orderId}`,
+          );
         }
       })
-      .catch(error => {
-        this.logger.error(`Error sending order status update email: ${error.message}`);
+      .catch((error) => {
+        this.logger.error(
+          `Error sending order status update email: ${(error as Error)?.message || 'Unknown error'}`,
+        );
+      });
+
+    return updatedOrder;
+  }
+
+  // Admin methods
+  async getAllOrders(
+    page: number = 1,
+    limit: number = 10,
+    status?: string,
+    search?: string,
+  ) {
+    const skip = (page - 1) * limit;
+    const where: OrderSearchWhere = {};
+
+    if (status && status !== 'ALL') {
+      where.status = status as 'PENDING' | 'PAID' | 'CANCELLED';
+    }
+
+    if (search) {
+      where.OR = [
+        { id: { equals: parseInt(search) || 0 } },
+        { user: { name: { contains: search, mode: 'insensitive' } } },
+        { user: { email: { contains: search, mode: 'insensitive' } } },
+      ];
+    }
+
+    const [orders, total] = await Promise.all([
+      this.prisma.order.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          items: {
+            include: {
+              product: {
+                select: {
+                  id: true,
+                  title: true,
+                  image: true,
+                },
+              },
+            },
+          },
+        },
+      }),
+      this.prisma.order.count({ where }),
+    ]);
+
+    return {
+      orders,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  async getOrderById(orderId: number) {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        items: {
+          include: {
+            product: true,
+          },
+        },
+      },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+
+    return order;
+  }
+
+  async updateOrderStatusAdmin(
+    orderId: number,
+    newStatus: 'PENDING' | 'PAID' | 'CANCELLED',
+  ) {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: { user: true },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+
+    const updatedOrder = await this.prisma.order.update({
+      where: { id: orderId },
+      data: { status: newStatus },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        items: {
+          include: {
+            product: true,
+          },
+        },
+      },
+    });
+
+    // Enviar email de actualización de estado (no bloqueante)
+    void this.emailService
+      .sendOrderStatusUpdateEmail(
+        order.user.email,
+        order.user.name ?? 'Cliente',
+        orderId,
+        newStatus,
+      )
+      .then((success) => {
+        if (success) {
+          this.logger.log(
+            `Order status update email sent for order #${orderId}`,
+          );
+        } else {
+          this.logger.warn(
+            `Failed to send order status update email for order #${orderId}`,
+          );
+        }
+      })
+      .catch((error) => {
+        this.logger.error(
+          `Error sending order status update email: ${(error as Error)?.message || 'Unknown error'}`,
+        );
       });
 
     return updatedOrder;

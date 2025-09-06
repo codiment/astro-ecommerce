@@ -1,0 +1,805 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="My Profile">
+    <div class="min-h-screen bg-gray-50 py-8">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Page Header -->
+            <div class="bg-white shadow rounded-lg mb-6">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h1 class="text-2xl font-bold text-gray-900">My Profile</h1>
+                    <p class="mt-1 text-sm text-gray-600">
+                        Manage your account information and preferences
+                    </p>
+                </div>
+            </div>
+
+            <!-- Profile Content -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Profile Information -->
+                <div class="lg:col-span-2">
+                    <div class="bg-white shadow rounded-lg">
+                        <div class="px-6 py-4 border-b border-gray-200">
+                            <h2 class="text-lg font-medium text-gray-900">
+                                Profile Information
+                            </h2>
+                            <p class="mt-1 text-sm text-gray-600">
+                                Update your personal information
+                            </p>
+                        </div>
+
+                        <div class="px-6 py-6">
+                            <!-- Loading State -->
+                            <div
+                                id="profileLoadingState"
+                                class="text-center py-8"
+                            >
+                                <div
+                                    class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"
+                                >
+                                </div>
+                                <p class="mt-2 text-gray-600">
+                                    Loading profile...
+                                </p>
+                            </div>
+
+                            <!-- Profile Form -->
+                            <form id="profileForm" class="hidden space-y-6">
+                                <div
+                                    class="grid grid-cols-1 md:grid-cols-2 gap-6"
+                                >
+                                    <div>
+                                        <label
+                                            for="name"
+                                            class="block text-sm font-medium text-gray-700"
+                                        >
+                                            Full Name
+                                        </label>
+                                        <input
+                                            type="text"
+                                            id="name"
+                                            name="name"
+                                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                        />
+                                        <div
+                                            id="nameError"
+                                            class="text-red-500 text-sm mt-1 hidden"
+                                        >
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label
+                                            for="email"
+                                            class="block text-sm font-medium text-gray-700"
+                                        >
+                                            Email Address
+                                        </label>
+                                        <input
+                                            type="email"
+                                            id="email"
+                                            name="email"
+                                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                        />
+                                        <div
+                                            id="emailError"
+                                            class="text-red-500 text-sm mt-1 hidden"
+                                        >
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="flex justify-end">
+                                    <button
+                                        type="submit"
+                                        id="updateProfileBtn"
+                                        class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        <span id="updateProfileText"
+                                            >Update Profile</span
+                                        >
+                                        <span
+                                            id="updateProfileLoading"
+                                            class="hidden"
+                                        >
+                                            <svg
+                                                class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline"
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <circle
+                                                    class="opacity-25"
+                                                    cx="12"
+                                                    cy="12"
+                                                    r="10"
+                                                    stroke="currentColor"
+                                                    stroke-width="4"></circle>
+                                                <path
+                                                    class="opacity-75"
+                                                    fill="currentColor"
+                                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                                ></path>
+                                            </svg>
+                                            Updating...
+                                        </span>
+                                    </button>
+                                </div>
+
+                                <div
+                                    id="profileSuccessMessage"
+                                    class="text-green-600 text-sm hidden"
+                                >
+                                </div>
+                                <div
+                                    id="profileErrorMessage"
+                                    class="text-red-600 text-sm hidden"
+                                >
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Change Password Section -->
+                    <div class="bg-white shadow rounded-lg mt-6">
+                        <div class="px-6 py-4 border-b border-gray-200">
+                            <h2 class="text-lg font-medium text-gray-900">
+                                Change Password
+                            </h2>
+                            <p class="mt-1 text-sm text-gray-600">
+                                Update your account password
+                            </p>
+                        </div>
+
+                        <div class="px-6 py-6">
+                            <form id="passwordForm" class="space-y-6">
+                                <div>
+                                    <label
+                                        for="currentPassword"
+                                        class="block text-sm font-medium text-gray-700"
+                                    >
+                                        Current Password
+                                    </label>
+                                    <input
+                                        type="password"
+                                        id="currentPassword"
+                                        name="currentPassword"
+                                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                    />
+                                    <div
+                                        id="currentPasswordError"
+                                        class="text-red-500 text-sm mt-1 hidden"
+                                    >
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label
+                                        for="newPassword"
+                                        class="block text-sm font-medium text-gray-700"
+                                    >
+                                        New Password
+                                    </label>
+                                    <input
+                                        type="password"
+                                        id="newPassword"
+                                        name="newPassword"
+                                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                    />
+                                    <div
+                                        id="newPasswordError"
+                                        class="text-red-500 text-sm mt-1 hidden"
+                                    >
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label
+                                        for="confirmPassword"
+                                        class="block text-sm font-medium text-gray-700"
+                                    >
+                                        Confirm New Password
+                                    </label>
+                                    <input
+                                        type="password"
+                                        id="confirmPassword"
+                                        name="confirmPassword"
+                                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                    />
+                                    <div
+                                        id="confirmPasswordError"
+                                        class="text-red-500 text-sm mt-1 hidden"
+                                    >
+                                    </div>
+                                </div>
+
+                                <div class="flex justify-end">
+                                    <button
+                                        type="submit"
+                                        id="changePasswordBtn"
+                                        class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        <span id="changePasswordText"
+                                            >Change Password</span
+                                        >
+                                        <span
+                                            id="changePasswordLoading"
+                                            class="hidden"
+                                        >
+                                            <svg
+                                                class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline"
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <circle
+                                                    class="opacity-25"
+                                                    cx="12"
+                                                    cy="12"
+                                                    r="10"
+                                                    stroke="currentColor"
+                                                    stroke-width="4"></circle>
+                                                <path
+                                                    class="opacity-75"
+                                                    fill="currentColor"
+                                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                                ></path>
+                                            </svg>
+                                            Changing...
+                                        </span>
+                                    </button>
+                                </div>
+
+                                <div
+                                    id="passwordSuccessMessage"
+                                    class="text-green-600 text-sm hidden"
+                                >
+                                </div>
+                                <div
+                                    id="passwordErrorMessage"
+                                    class="text-red-600 text-sm hidden"
+                                >
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Account Information -->
+                <div class="lg:col-span-1">
+                    <div class="bg-white shadow rounded-lg">
+                        <div class="px-6 py-4 border-b border-gray-200">
+                            <h2 class="text-lg font-medium text-gray-900">
+                                Account Information
+                            </h2>
+                        </div>
+
+                        <div class="px-6 py-6">
+                            <div id="accountInfo" class="space-y-4">
+                                <!-- Loading -->
+                                <div
+                                    id="accountLoadingState"
+                                    class="text-center py-4"
+                                >
+                                    <div
+                                        class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"
+                                    >
+                                    </div>
+                                </div>
+
+                                <!-- Account Details -->
+                                <div
+                                    id="accountDetails"
+                                    class="hidden space-y-4"
+                                >
+                                    <div>
+                                        <dt
+                                            class="text-sm font-medium text-gray-500"
+                                        >
+                                            User ID
+                                        </dt>
+                                        <dd
+                                            id="userId"
+                                            class="text-sm text-gray-900"
+                                        >
+                                        </dd>
+                                    </div>
+                                    <div>
+                                        <dt
+                                            class="text-sm font-medium text-gray-500"
+                                        >
+                                            Role
+                                        </dt>
+                                        <dd
+                                            id="userRole"
+                                            class="text-sm text-gray-900"
+                                        >
+                                            <span
+                                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                            ></span>
+                                        </dd>
+                                    </div>
+                                    <div>
+                                        <dt
+                                            class="text-sm font-medium text-gray-500"
+                                        >
+                                            Member Since
+                                        </dt>
+                                        <dd
+                                            id="memberSince"
+                                            class="text-sm text-gray-900"
+                                        >
+                                        </dd>
+                                    </div>
+                                    <div>
+                                        <dt
+                                            class="text-sm font-medium text-gray-500"
+                                        >
+                                            Last Updated
+                                        </dt>
+                                        <dd
+                                            id="lastUpdated"
+                                            class="text-sm text-gray-900"
+                                        >
+                                        </dd>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="bg-white shadow rounded-lg mt-6">
+                        <div class="px-6 py-4 border-b border-gray-200">
+                            <h2 class="text-lg font-medium text-gray-900">
+                                Quick Actions
+                            </h2>
+                        </div>
+
+                        <div class="px-6 py-6 space-y-3">
+                            <a
+                                href="/orders"
+                                class="block w-full text-center bg-gray-100 hover:bg-gray-200 text-gray-900 font-medium py-2 px-4 rounded-md transition-colors"
+                            >
+                                View Orders
+                            </a>
+                            <a
+                                href="/cart"
+                                class="block w-full text-center bg-gray-100 hover:bg-gray-200 text-gray-900 font-medium py-2 px-4 rounded-md transition-colors"
+                            >
+                                View Cart
+                            </a>
+                            <button
+                                id="logoutBtn"
+                                class="block w-full text-center bg-red-100 hover:bg-red-200 text-red-900 font-medium py-2 px-4 rounded-md transition-colors"
+                            >
+                                Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="hidden fixed top-4 right-4 z-50">
+        <div
+            class="bg-white border border-gray-200 rounded-lg shadow-lg p-4 max-w-sm"
+        >
+            <div class="flex items-center">
+                <div id="notificationIcon" class="flex-shrink-0"></div>
+                <div class="ml-3">
+                    <p
+                        id="notificationMessage"
+                        class="text-sm font-medium text-gray-900"
+                    >
+                    </p>
+                </div>
+                <div class="ml-auto pl-3">
+                    <button
+                        id="closeNotification"
+                        class="text-gray-400 hover:text-gray-600"
+                    >
+                        <span class="sr-only">Close</span>
+                        <svg
+                            class="h-5 w-5"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                        >
+                            <path
+                                fill-rule="evenodd"
+                                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                                clip-rule="evenodd"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</Layout>
+
+<script>
+    import { apiService } from "../services/api";
+    import { logout } from "../middleware/auth";
+    import type { User } from "../types";
+
+    // Elements
+    const profileLoadingState = document.getElementById("profileLoadingState")!;
+    const profileForm = document.getElementById(
+        "profileForm",
+    )! as HTMLFormElement;
+    const nameInput = document.getElementById("name")! as HTMLInputElement;
+    const emailInput = document.getElementById("email")! as HTMLInputElement;
+    const updateProfileBtn = document.getElementById(
+        "updateProfileBtn",
+    )! as HTMLButtonElement;
+    const updateProfileText = document.getElementById("updateProfileText")!;
+    const updateProfileLoading = document.getElementById(
+        "updateProfileLoading",
+    )!;
+    const profileSuccessMessage = document.getElementById(
+        "profileSuccessMessage",
+    )!;
+    const profileErrorMessage = document.getElementById("profileErrorMessage")!;
+
+    const passwordForm = document.getElementById(
+        "passwordForm",
+    )! as HTMLFormElement;
+    const currentPasswordInput = document.getElementById(
+        "currentPassword",
+    )! as HTMLInputElement;
+    const newPasswordInput = document.getElementById(
+        "newPassword",
+    )! as HTMLInputElement;
+    const confirmPasswordInput = document.getElementById(
+        "confirmPassword",
+    )! as HTMLInputElement;
+    const changePasswordBtn = document.getElementById(
+        "changePasswordBtn",
+    )! as HTMLButtonElement;
+    const changePasswordText = document.getElementById("changePasswordText")!;
+    const changePasswordLoading = document.getElementById(
+        "changePasswordLoading",
+    )!;
+    const passwordSuccessMessage = document.getElementById(
+        "passwordSuccessMessage",
+    )!;
+    const passwordErrorMessage = document.getElementById(
+        "passwordErrorMessage",
+    )!;
+
+    const accountLoadingState = document.getElementById("accountLoadingState")!;
+    const accountDetails = document.getElementById("accountDetails")!;
+    const userIdEl = document.getElementById("userId")!;
+    const userRoleEl = document.getElementById("userRole")!;
+    const memberSinceEl = document.getElementById("memberSince")!;
+    const lastUpdatedEl = document.getElementById("lastUpdated")!;
+
+    const logoutBtn = document.getElementById("logoutBtn")!;
+    const notification = document.getElementById("notification")!;
+    const notificationMessage = document.getElementById("notificationMessage")!;
+    const notificationIcon = document.getElementById("notificationIcon")!;
+    const closeNotification = document.getElementById("closeNotification")!;
+
+    let currentUser: User | null = null;
+
+    // Utility functions
+    function showNotification(
+        message: string,
+        type: "success" | "error" | "warning" = "success",
+    ) {
+        notificationMessage.textContent = message;
+
+        const iconColors = {
+            success: "text-green-500",
+            error: "text-red-500",
+            warning: "text-yellow-500",
+        };
+
+        notificationIcon.innerHTML = `
+            <svg class="h-5 w-5 ${iconColors[type]}" fill="currentColor" viewBox="0 0 20 20">
+                ${
+                    type === "success"
+                        ? '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />'
+                        : type === "error"
+                          ? '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />'
+                          : '<path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />'
+                }
+            </svg>
+        `;
+
+        notification.classList.remove("hidden");
+
+        setTimeout(() => {
+            notification.classList.add("hidden");
+        }, 5000);
+    }
+
+    function showError(elementId: string, message: string) {
+        const errorElement = document.getElementById(elementId);
+        if (errorElement) {
+            errorElement.textContent = message;
+            errorElement.classList.remove("hidden");
+        }
+    }
+
+    function clearErrors() {
+        const errorElements = [
+            "nameError",
+            "emailError",
+            "profileErrorMessage",
+            "currentPasswordError",
+            "newPasswordError",
+            "confirmPasswordError",
+            "passwordErrorMessage",
+        ];
+
+        errorElements.forEach((id) => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.classList.add("hidden");
+                element.textContent = "";
+            }
+        });
+    }
+
+    function clearSuccessMessages() {
+        profileSuccessMessage.classList.add("hidden");
+        passwordSuccessMessage.classList.add("hidden");
+    }
+
+    function validateEmail(email: string): boolean {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+
+    function formatDate(dateString: string): string {
+        const date = new Date(dateString);
+        return date.toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+        });
+    }
+
+    function setProfileLoading(loading: boolean) {
+        updateProfileBtn.disabled = loading;
+        if (loading) {
+            updateProfileText.classList.add("hidden");
+            updateProfileLoading.classList.remove("hidden");
+        } else {
+            updateProfileText.classList.remove("hidden");
+            updateProfileLoading.classList.add("hidden");
+        }
+    }
+
+    function setPasswordLoading(loading: boolean) {
+        changePasswordBtn.disabled = loading;
+        if (loading) {
+            changePasswordText.classList.add("hidden");
+            changePasswordLoading.classList.remove("hidden");
+        } else {
+            changePasswordText.classList.remove("hidden");
+            changePasswordLoading.classList.add("hidden");
+        }
+    }
+
+    // Load user profile
+    async function loadProfile() {
+        try {
+            const response = await apiService.getProfile();
+
+            if (response.success && response.data) {
+                currentUser = response.data;
+
+                // Fill form fields
+                nameInput.value = currentUser.name || "";
+                emailInput.value = currentUser.email || "";
+
+                // Show account information
+                userIdEl.textContent = currentUser.id;
+
+                const roleSpan = userRoleEl.querySelector("span")!;
+                roleSpan.textContent = currentUser.role;
+                roleSpan.className = `inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    currentUser.role === "ADMIN"
+                        ? "bg-purple-100 text-purple-800"
+                        : "bg-blue-100 text-blue-800"
+                }`;
+
+                memberSinceEl.textContent = formatDate(currentUser.createdAt);
+                lastUpdatedEl.textContent = formatDate(currentUser.updatedAt);
+
+                // Show form and account details
+                profileLoadingState.classList.add("hidden");
+                accountLoadingState.classList.add("hidden");
+                profileForm.classList.remove("hidden");
+                accountDetails.classList.remove("hidden");
+            } else {
+                throw new Error(response.error || "Error loading profile");
+            }
+        } catch (error) {
+            console.error("Error loading profile:", error);
+            showNotification("Error loading profile", "error");
+        }
+    }
+
+    // Handle profile form submission
+    profileForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        clearErrors();
+        clearSuccessMessages();
+
+        const name = nameInput.value.trim();
+        const email = emailInput.value.trim();
+
+        // Validation
+        let hasErrors = false;
+
+        if (name && name.length < 2) {
+            showError("nameError", "Name must be at least 2 characters long");
+            hasErrors = true;
+        }
+
+        if (email && !validateEmail(email)) {
+            showError("emailError", "Please enter a valid email address");
+            hasErrors = true;
+        }
+
+        if (hasErrors) return;
+
+        setProfileLoading(true);
+
+        try {
+            const profileData: { name?: string; email?: string } = {};
+
+            if (name !== currentUser?.name) {
+                profileData.name = name;
+            }
+
+            if (email !== currentUser?.email) {
+                profileData.email = email;
+            }
+
+            if (Object.keys(profileData).length === 0) {
+                showNotification("No changes to update", "warning");
+                setProfileLoading(false);
+                return;
+            }
+
+            const response = await apiService.updateProfile(profileData);
+
+            if (response.success && response.data) {
+                currentUser = response.data;
+                profileSuccessMessage.textContent =
+                    "Profile updated successfully";
+                profileSuccessMessage.classList.remove("hidden");
+                showNotification("Profile updated successfully", "success");
+
+                // Update account information
+                lastUpdatedEl.textContent = formatDate(response.data.updatedAt);
+            } else {
+                profileErrorMessage.textContent =
+                    response.error || "Error updating profile";
+                profileErrorMessage.classList.remove("hidden");
+            }
+        } catch (error) {
+            profileErrorMessage.textContent =
+                "Connection error. Please try again.";
+            profileErrorMessage.classList.remove("hidden");
+        } finally {
+            setProfileLoading(false);
+        }
+    });
+
+    // Handle password change form submission
+    passwordForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        clearErrors();
+        clearSuccessMessages();
+
+        const currentPassword = currentPasswordInput.value;
+        const newPassword = newPasswordInput.value;
+        const confirmPassword = confirmPasswordInput.value;
+
+        // Validation
+        let hasErrors = false;
+
+        if (!currentPassword) {
+            showError("currentPasswordError", "Current password is required");
+            hasErrors = true;
+        }
+
+        if (!newPassword) {
+            showError("newPasswordError", "New password is required");
+            hasErrors = true;
+        } else if (newPassword.length < 6) {
+            showError(
+                "newPasswordError",
+                "New password must be at least 6 characters long",
+            );
+            hasErrors = true;
+        }
+
+        if (!confirmPassword) {
+            showError(
+                "confirmPasswordError",
+                "Please confirm your new password",
+            );
+            hasErrors = true;
+        } else if (newPassword !== confirmPassword) {
+            showError("confirmPasswordError", "Passwords do not match");
+            hasErrors = true;
+        }
+
+        if (hasErrors) return;
+
+        setPasswordLoading(true);
+
+        try {
+            const response = await apiService.changePassword({
+                currentPassword,
+                newPassword,
+            });
+
+            if (response.success) {
+                passwordSuccessMessage.textContent =
+                    "Password changed successfully";
+                passwordSuccessMessage.classList.remove("hidden");
+                showNotification("Password changed successfully", "success");
+
+                // Clear password fields
+                currentPasswordInput.value = "";
+                newPasswordInput.value = "";
+                confirmPasswordInput.value = "";
+            } else {
+                passwordErrorMessage.textContent =
+                    response.error || "Error changing password";
+                passwordErrorMessage.classList.remove("hidden");
+            }
+        } catch (error) {
+            passwordErrorMessage.textContent =
+                "Connection error. Please try again.";
+            passwordErrorMessage.classList.remove("hidden");
+        } finally {
+            setPasswordLoading(false);
+        }
+    });
+
+    // Event listeners
+    closeNotification.addEventListener("click", () => {
+        notification.classList.add("hidden");
+    });
+
+    logoutBtn.addEventListener("click", () => {
+        logout();
+    });
+
+    // Initialize
+    document.addEventListener("DOMContentLoaded", () => {
+        // Check authentication
+        if (!apiService.isAuthenticated()) {
+            window.location.href = "/login";
+            return;
+        }
+
+        loadProfile();
+    });
+</script>
+
+<style>
+    .animate-spin {
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        from {
+            transform: rotate(0deg);
+        }
+        to {
+            transform: rotate(360deg);
+        }
+    }
+</style>

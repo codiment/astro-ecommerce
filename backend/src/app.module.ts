@@ -12,12 +12,11 @@ import { CacheModule as NestCacheModule } from '@nestjs/cache-manager';
 import * as redisStore from 'cache-manager-ioredis';
 import { ThrottlerModule, ThrottlerGuard, seconds } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
-
-// Importar tu CacheModule propio (asegurate la ruta sea correcta)
 import { CacheModule } from './cache/cache.module';
 import { LoggerModule } from './logger/logger.module';
 import { BullModule } from '@nestjs/bullmq';
 import { EmailModule } from './email/email.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -57,6 +56,7 @@ import { EmailModule } from './email/email.module';
     OrderModule,
     CacheModule,
     EmailModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [

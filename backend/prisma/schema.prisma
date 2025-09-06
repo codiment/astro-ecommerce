@@ -61,7 +61,7 @@ model CartItem {
   id        Int      @id @default(autoincrement())
   cart      Cart     @relation(fields: [cartId], references: [id])
   cartId    Int
-  product   Product  @relation(fields: [productId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   productId Int
   quantity  Int
   createdAt DateTime @default(now())

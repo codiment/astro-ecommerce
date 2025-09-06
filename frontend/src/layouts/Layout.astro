@@ -1,0 +1,197 @@
+---
+import "../styles/global.css";
+import AuthNav from "../components/AuthNav.astro";
+
+export interface Props {
+    title: string;
+    description?: string;
+}
+
+const { title, description = "Modern e-commerce with Astro and TypeScript" } =
+    Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="description" content={description} />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <title>{title}</title>
+    </head>
+    <body class="min-h-screen bg-stone-50">
+        <header class="bg-stone-50">
+            <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <div class="flex items-center">
+                        <a
+                            href="/"
+                            class="flex items-center text-xl font-bold text-stone-900"
+                        >
+                            <svg
+                                class="w-6 h-6 text-blue-600 mr-2"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
+                            ElectroShop
+                        </a>
+                    </div>
+
+                    <div class="hidden md:block">
+                        <div class="ml-10 flex items-baseline space-x-4">
+                            <a
+                                href="/"
+                                class="text-stone-900 hover:text-stone-700 px-3 py-2 rounded-md text-sm font-medium"
+                            >
+                                Home
+                            </a>
+                            <a
+                                href="/products"
+                                class="text-stone-900 hover:text-stone-700 px-3 py-2 rounded-md text-sm font-medium"
+                            >
+                                Products
+                            </a>
+                            <a
+                                href="/cart"
+                                class="relative text-stone-900 hover:text-stone-700 px-3 py-2 rounded-md text-sm font-medium"
+                            >
+                                Cart
+                                <span
+                                    id="cartBadge"
+                                    class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden"
+                                >
+                                    0
+                                </span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <AuthNav />
+                </div>
+            </nav>
+        </header>
+
+        <main class="flex-1">
+            <slot />
+        </main>
+
+        <footer class="bg-stone-50 text-stone-900">
+            <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4">ElectroShop</h3>
+                        <p class="text-stone-700">
+                            Your trusted online store with the best products.
+                        </p>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4">Links</h3>
+                        <ul class="space-y-2">
+                            <li>
+                                <a
+                                    href="/"
+                                    class="text-stone-700 hover:text-stone-900"
+                                    >Home</a
+                                >
+                            </li>
+                            <li>
+                                <a
+                                    href="/products"
+                                    class="text-stone-700 hover:text-stone-900"
+                                    >Products</a
+                                >
+                            </li>
+                            <li>
+                                <a
+                                    href="/about"
+                                    class="text-stone-700 hover:text-stone-900"
+                                    >About</a
+                                >
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4">Contact</h3>
+                        <p class="text-stone-700">
+                            Email: info@electroshop.com
+                        </p>
+                        <p class="text-stone-700">Phone: +1 234 567 890</p>
+                    </div>
+                </div>
+
+                <div class="mt-8 pt-8 border-t border-stone-200 text-center">
+                    <p class="text-stone-700">
+                        © 2024 ElectroShop. All rights reserved.
+                    </p>
+                </div>
+            </div>
+        </footer>
+        <script>
+            import apiService from "../services/api";
+
+            // const apiService = new ApiService(); // No longer necessary, we use the exported instance
+
+            // Global function for logout
+            (window as any).logout = function () {
+                try {
+                    apiService.removeToken();
+                    window.location.href = "/";
+                } catch (error) {
+                    console.error("Error during logout:", error);
+                    // Force local logout if there is an error
+                    localStorage.removeItem("token");
+                    window.location.href = "/";
+                }
+            };
+
+            // Function to update the cart badge
+            async function updateCartBadge() {
+                const cartBadge = document.getElementById("cartBadge");
+                if (!cartBadge) return;
+
+                if (!apiService.isAuthenticated()) {
+                    cartBadge.classList.add("hidden");
+                    return;
+                }
+
+                try {
+                    const response = await apiService.getCart();
+                    if (response.success && response.data) {
+                        const totalItems = response.data.items.reduce(
+                            (sum: number, item: any) => sum + item.quantity,
+                            0,
+                        );
+
+                        if (totalItems > 0) {
+                            cartBadge.textContent = totalItems.toString();
+                            cartBadge.classList.remove("hidden");
+                        } else {
+                            cartBadge.classList.add("hidden");
+                        }
+                    } else {
+                        cartBadge.classList.add("hidden");
+                    }
+                } catch (error) {
+                    console.error("Error updating cart badge:", error);
+                    cartBadge.classList.add("hidden");
+                }
+            }
+
+            // Make the function global so it can be called from other files
+            (window as any).updateCartBadge = updateCartBadge;
+
+            // Update the badge when the page loads
+            document.addEventListener("DOMContentLoaded", updateCartBadge);
+        </script>
+    </body>
+</html>

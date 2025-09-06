@@ -17,5 +17,6 @@ import { EmailModule } from 'src/email/email.module';
   ],
   controllers: [OrderController],
   providers: [OrderProcessor, OrderCronService, OrderService],
+  exports: [OrderService],
 })
 export class OrderModule {}

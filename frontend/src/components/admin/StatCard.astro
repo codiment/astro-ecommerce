@@ -1,0 +1,133 @@
+---
+interface Props {
+  title: string;
+  value: string | number;
+  icon?: string;
+  trend?: {
+    value: number;
+    isPositive: boolean;
+  };
+  color?: 'blue' | 'green' | 'yellow' | 'red' | 'purple';
+}
+
+const { title, value, icon, trend, color = 'blue' } = Astro.props;
+
+const colorClasses = {
+  blue: 'border-blue-200 bg-blue-50 text-blue-600',
+  green: 'border-green-200 bg-green-50 text-green-600',
+  yellow: 'border-yellow-200 bg-yellow-50 text-yellow-600',
+  red: 'border-red-200 bg-red-50 text-red-600',
+  purple: 'border-purple-200 bg-purple-50 text-purple-600'
+};
+
+const iconColorClasses = {
+  blue: 'text-blue-500',
+  green: 'text-green-500',
+  yellow: 'text-yellow-500',
+  red: 'text-red-500',
+  purple: 'text-purple-500'
+};
+---
+
+<div class={`stat-card ${colorClasses[color]}`}>
+  <div class="stat-header">
+    <div class="stat-title">
+      {icon && (
+        <div class={`stat-icon ${iconColorClasses[color]}`}>
+          <Fragment set:html={icon} />
+        </div>
+      )}
+      <span>{title}</span>
+    </div>
+    {trend && (
+      <div class={`stat-trend ${trend.isPositive ? 'positive' : 'negative'}`}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          {trend.isPositive ? (
+            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+          ) : (
+            <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline>
+          )}
+        </svg>
+        <span>{Math.abs(trend.value)}%</span>
+      </div>
+    )}
+  </div>
+  <div class="stat-value">{value}</div>
+</div>
+
+<style>
+  .stat-card {
+    background: white;
+    border: 1px solid;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s;
+  }
+
+  .stat-card:hover {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+  }
+
+  .stat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .stat-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #6b7280;
+  }
+
+  .stat-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+
+  .stat-trend {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+
+  .stat-trend.positive {
+    color: #10b981;
+  }
+
+  .stat-trend.negative {
+    color: #ef4444;
+  }
+
+  .stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1f2937;
+    line-height: 1;
+  }
+
+  @media (max-width: 640px) {
+    .stat-card {
+      padding: 1rem;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+    }
+
+    .stat-title {
+      font-size: 0.75rem;
+    }
+  }
+</style>

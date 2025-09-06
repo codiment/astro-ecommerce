@@ -51,6 +51,7 @@ async function bootstrap() {
         ? ['https://tusitio.com'] // ✅ Adjust for production
         : '*',
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   });
   logger.log('✅ CORS configured', 'Bootstrap');
 

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -26,7 +26,17 @@ export class ProductService {
     });
   }
 
-  remove(id: number) {
+  async remove(id: number) {
+    const orderItems = await this.prisma.orderItem.findMany({
+      where: { productId: id },
+    });
+
+    if (orderItems.length > 0) {
+      throw new BadRequestException(
+        'This product is part of an order and cannot be deleted.',
+      );
+    }
+
     return this.prisma.product.delete({ where: { id } });
   }
 }
