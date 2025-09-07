@@ -1,0 +1,103 @@
+---
+import { TrendingUp, Users, Package, DollarSign } from '@lucide/astro';
+
+const stats = [
+  {
+    title: 'Ventas Totales',
+    value: '$12,345',
+    change: '+12%',
+    icon: DollarSign,
+    color: 'green'
+  },
+  {
+    title: 'Usuarios',
+    value: '1,234',
+    change: '+5%',
+    icon: Users,
+    color: 'blue'
+  },
+  {
+    title: 'Productos',
+    value: '567',
+    change: '+8%',
+    icon: Package,
+    color: 'purple'
+  },
+  {
+    title: 'Conversión',
+    value: '3.2%',
+    change: '+0.5%',
+    icon: TrendingUp,
+    color: 'orange'
+  }
+];
+---
+
+<div class="stats-grid">
+  {stats.map((stat) => {
+    const Icon = stat.icon;
+    return (
+      <div class={`stat-card stat-${stat.color}`}>
+        <div class="stat-icon">
+          <Icon size={24} />
+        </div>
+        <div class="stat-content">
+          <h3 class="stat-value">{stat.value}</h3>
+          <p class="stat-title">{stat.title}</p>
+          <span class="stat-change">{stat.change}</span>
+        </div>
+      </div>
+    );
+  })}
+</div>
+
+<style>
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  
+  .stat-card {
+    background: white;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .stat-icon {
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .stat-green .stat-icon { background: #dcfce7; color: #16a34a; }
+  .stat-blue .stat-icon { background: #dbeafe; color: #2563eb; }
+  .stat-purple .stat-icon { background: #f3e8ff; color: #9333ea; }
+  .stat-orange .stat-icon { background: #fed7aa; color: #ea580c; }
+  
+  .stat-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin: 0 0 0.25rem 0;
+    color: #1e293b;
+  }
+  
+  .stat-title {
+    color: #64748b;
+    margin: 0 0 0.5rem 0;
+    font-size: 0.875rem;
+  }
+  
+  .stat-change {
+    color: #16a34a;
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+</style>

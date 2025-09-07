@@ -1,0 +1,47 @@
+---
+import styles from '../../styles/navbar.module.css'
+import { Search, ShoppingCart, User } from '@lucide/astro';
+
+const navItems = [ 
+  { name: 'Productos', url: '/products' },
+  { name: 'Categorías', url: '/categorias' },
+  { name: 'Ofertas', url: '/ofertas' },
+  { name: 'Contacto', url: '/contacto' },
+];
+---
+ 
+<nav class={styles.navbar}>
+  <div class={styles.logo}>
+    <a href="/">E-Commerce</a>
+  </div>
+  
+  <ul class={styles.navList}>
+    {navItems.map((item) => (
+      <li class={styles.navItem}>
+        <a href={item.url} class={styles.navLink}>{item.name}</a>
+      </li>
+    ))}
+  </ul>
+  
+  <div class={styles.actions}>
+    <div class={styles.searchContainer}>
+      <Search class={styles.searchIcon} size={16} />
+      <input 
+        type="text" 
+        class={styles.searchBar}
+        placeholder="Buscar productos..."
+        id="searchInput"
+      />
+    </div>
+    
+    <a href="/login" class={styles.userBtn} aria-label="Iniciar Sesión">
+      <User size={20} />
+    </a>
+    
+    <button class={styles.cartBtn} aria-label="Carrito">
+      <ShoppingCart size={20} />
+    </button>
+  </div>
+</nav>
+
+<!-- SIN SCRIPT -->

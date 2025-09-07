@@ -54,8 +54,28 @@ export class OrderService {
     private emailService: EmailService,
   ) {}
 
-  async createOrder(userId: number) {
+  async createOrder(userId: number, idempotencyKey?: string) {
     return this.prisma.$transaction(async (tx) => {
+      // ✅ VERIFICACIÓN DE IDEMPOTENCIA
+      // Buscar orden reciente pendiente (últimos 5 minutos)
+      const recentOrder = await tx.order.findFirst({
+        where: {
+          userId,
+          status: 'PENDING',
+          createdAt: {
+            gte: new Date(Date.now() - 5 * 60 * 1000) // 5 minutos
+          }
+        },
+        include: {
+          items: {
+            include: {
+              product: true,
+            },
+          },
+          user: true,
+        },
+      });
+
       // 1- Obtener el carrito del usuario con items y productos
       const cart = await tx.cart.findUnique({
         where: { userId },
@@ -67,6 +87,19 @@ export class OrderService {
       });
       if (!cart || cart.items.length === 0) {
         throw new NotFoundException('Cart is empty or not found');
+      }
+
+      // ✅ VERIFICACIÓN ADICIONAL: Si existe orden reciente, comparar totales
+      if (recentOrder) {
+        const cartTotal = cart.items.reduce((sum, item) => {
+          return sum + item.product.price * item.quantity;
+        }, 0);
+
+        // Si el total coincide, es la misma orden (idempotencia)
+        if (Math.abs(recentOrder.total - cartTotal) < 0.01) {
+          this.logger.log(`Returning existing order #${recentOrder.id} for user ${userId}`);
+          return recentOrder;
+        }
       }
 
       // 2- Validar stock y descontar en un solo paso atómico
@@ -123,11 +156,12 @@ export class OrderService {
       // 6- Enviar email de confirmación (fuera de la transacción)
       void this.sendOrderConfirmationEmail(order);
 
+      this.logger.log(`New order #${order.id} created for user ${userId}`);
       return order;
     });
   }
 
-  private sendOrderConfirmationEmail(order: OrderWithRelations): void {
+  private async sendOrderConfirmationEmail(order: OrderWithRelations, idempotencyKey?: string) {
     try {
       // Preparar los datos para el email
       const emailData: OrderEmailData = {
@@ -141,10 +175,30 @@ export class OrderService {
         })),
       };
 
+<<<<<<< HEAD
       // Enviar email de forma no bloqueante
-      void this.emailService
-        .sendOrderConfirmationEmail(order.user.email, emailData)
-        .then((success) => {
+      // Generar idempotency key si no se proporciona
+      const emailIdempotencyKey = idempotencyKey || `order-confirmation-${order.id}`;
+
+      // Enviar email de forma no bloqueante con idempotencia
+      this.emailService.sendOrderConfirmationEmail(
+        order.user.email,
+        emailData,
+        emailIdempotencyKey
+      )
+        .then(success => {
+=======
+      // Generar idempotency key si no se proporciona
+      const emailIdempotencyKey = idempotencyKey || `order-confirmation-${order.id}`;
+
+      // Enviar email de forma no bloqueante con idempotencia
+      this.emailService.sendOrderConfirmationEmail(
+        order.user.email,
+        emailData,
+        emailIdempotencyKey
+      )
+        .then(success => {
+>>>>>>> origin/github_prod
           if (success) {
             this.logger.log(
               `Order confirmation email sent for order #${order.id}`,
@@ -215,6 +269,7 @@ export class OrderService {
     userId: number,
     orderId: number,
     newStatus: 'PENDING' | 'PAID' | 'CANCELLED',
+    idempotencyKey?: string,
   ) {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
@@ -236,15 +291,18 @@ export class OrderService {
       data: { status: newStatus },
     });
 
-    // Enviar email de actualización de estado (no bloqueante)
-    void this.emailService
-      .sendOrderStatusUpdateEmail(
-        order.user.email,
-        order.user.name ?? 'Cliente',
-        orderId,
-        newStatus,
-      )
-      .then((success) => {
+    // Generar idempotency key si no se proporciona
+    const emailIdempotencyKey = idempotencyKey || `order-status-${orderId}-${newStatus}`;
+
+    // Enviar email de actualización de estado (no bloqueante) con idempotencia
+    this.emailService.sendOrderStatusUpdateEmail(
+      order.user.email,
+      order.user.name ?? 'Cliente',
+      orderId,
+      newStatus,
+      emailIdempotencyKey
+    )
+      .then(success => {
         if (success) {
           this.logger.log(
             `Order status update email sent for order #${orderId}`,

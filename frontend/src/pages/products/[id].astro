@@ -1,0 +1,101 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import styles from "../../styles/productDetail.module.css";
+
+// Función requerida para rutas dinámicas
+export async function getStaticPaths() {
+  return [
+    { params: { id: '1' } },
+    { params: { id: '2' } },
+    { params: { id: '3' } }
+  ];
+}
+
+// Datos de ejemplo - después conectarás con tu API NestJS
+const products = {
+  1: {
+    id: 1,
+    name: "Smartphone Premium",
+    description: "El último modelo con tecnología avanzada. Pantalla OLED de 6.7 pulgadas, cámara triple de 108MP, procesador de última generación y batería de larga duración.",
+    price: 899,
+    image: "/images/smartphone.jpg",
+    badge: "Nuevo",
+    specs: ["6.7\" OLED", "108MP Triple Camera", "256GB Storage", "5000mAh Battery"]
+  },
+  2: {
+    id: 2,
+    name: "Laptop Gaming",
+    description: "Perfecta para gaming y trabajo profesional. RTX 4070, Intel i7, 32GB RAM y SSD de 1TB para máximo rendimiento.",
+    price: 1299,
+    image: "/images/laptop.jpg",
+    badge: "Popular",
+    specs: ["RTX 4070", "Intel i7-13700H", "32GB DDR5", "1TB NVMe SSD"]
+  },
+  3: {
+    id: 3,
+    name: "Auriculares Wireless",
+    description: "Sonido de alta calidad sin cables. Cancelación activa de ruido, 30 horas de batería y resistencia al agua.",
+    price: 199,
+    image: "/images/headphones.jpg",
+    badge: "Oferta",
+    specs: ["Active Noise Cancelling", "30h Battery", "IPX4 Water Resistant", "Bluetooth 5.3"]
+  }
+};
+
+const { id } = Astro.params;
+const product = products[Number(id) as 1 | 2 | 3];
+
+if (!product) {
+  return Astro.redirect('/products');
+}
+---
+
+<Layout title={`E-Commerce - ${product.name}`}>
+  <div class={styles.container}>
+    <div class={styles.productDetail}>
+      <div class={styles.imageSection}>
+        <img 
+          src={product.image} 
+          alt={product.name}
+          class={styles.productImage}
+          transition:name={`product-image-${product.id}`}
+        />
+      </div>
+      
+      <div class={styles.infoSection}>
+        <div class={styles.header}>
+          <h1 class={styles.title} transition:name={`product-title-${product.id}`}>
+            {product.name}
+          </h1>
+          <span class={styles.badge} transition:name={`product-badge-${product.id}`}>
+            {product.badge}
+          </span>
+        </div>
+        
+        <p class={styles.description}>{product.description}</p>
+        
+        <div class={styles.specs}>
+          <h3>Especificaciones:</h3>
+          <ul>
+            {product.specs.map(spec => (
+              <li>{spec}</li>
+            ))}
+          </ul>
+        </div>
+        
+        <div class={styles.priceSection}>
+          <span class={styles.price} transition:name={`product-price-${product.id}`}>
+            ${product.price}
+          </span>
+          <button class={styles.addToCartBtn}>
+            Agregar al Carrito
+          </button>
+        </div>
+        
+        <a href="/products" class={styles.backBtn}>
+          ← Volver a Productos
+        </a>
+      </div>
+    </div>
+  </div>
+</Layout>

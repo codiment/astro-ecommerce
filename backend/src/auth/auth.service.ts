@@ -40,8 +40,15 @@ export class AuthService {
       role: newUser.role,
     };
 
+    // Enviar email de bienvenida con idempotencia
+    const welcomeIdempotencyKey = `welcome-${newUser.id}`;
     this.emailService
-      .sendWelcomeEmail(newUser.email, newUser.name || '')
+      .sendWelcomeEmail(
+        newUser.email,
+        newUser.name || '',
+        newUser.id,
+        welcomeIdempotencyKey,
+      )
       .then((success) => {
         if (success) {
           this.logger.log(`Welcome email sent to ${newUser.email}`);

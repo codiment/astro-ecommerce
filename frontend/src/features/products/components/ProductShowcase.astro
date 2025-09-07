@@ -1,0 +1,55 @@
+---
+import styles from '../../../styles/productShowcase.module.css';
+
+const products = [
+  {
+    id: 1,
+    name: "Smartphone Premium",
+    description: "El último modelo con tecnología avanzada",
+    price: "$899",
+    badge: "Nuevo"
+  },
+  {
+    id: 2,
+    name: "Laptop Gaming",
+    description: "Perfecta para gaming y trabajo profesional",
+    price: "$1,299",
+    badge: "Popular"
+  },
+  {
+    id: 3,
+    name: "Auriculares Wireless",
+    description: "Sonido de alta calidad sin cables",
+    price: "$199",
+    badge: "Oferta"
+  }
+];
+---
+
+<div class={styles.container}>
+  {products.map((product) => (
+    <a href={`/products/${product.id}`} class={styles.productCard}>
+      <div class={styles.productHeader}>
+        <div class={styles.titleRow}>
+          <h3 class={styles.productTitle} transition:name={`product-title-${product.id}`}>
+            {product.name}
+          </h3>
+          <span class={styles.productBadge} transition:name={`product-badge-${product.id}`}>
+            {product.badge}
+          </span>
+        </div>
+        <p class={styles.productDescription}>{product.description}</p>
+      </div>
+      <div class={styles.productContent}>
+        <div class={styles.productFooter}>
+          <span class={styles.productPrice} transition:name={`product-price-${product.id}`}>
+            {product.price}
+          </span>
+          <button class={styles.addToCartBtn} onclick="event.preventDefault(); event.stopPropagation();">
+            Agregar al carrito
+          </button>
+        </div>
+      </div>
+    </a>
+  ))}
+</div>

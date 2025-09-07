@@ -50,7 +50,7 @@ export class CartService {
     };
   }
 
-  async addToCart(userId: number, dto: addToCartDto) {
+  async addToCart(userId: number, dto: addToCartDto, replace: boolean = false) {
     const { productId, quantity } = dto;
 
     //1- Nos aseguramos que el producto existe
@@ -81,12 +81,15 @@ export class CartService {
       },
     });
 
-    const totalQuantity = existingItem
-      ? existingItem.quantity + quantity
-      : quantity;
+    // ✅ LÓGICA IDEMPOTENTE
+    const finalQuantity = replace 
+      ? quantity  // Establecer cantidad exacta (idempotente)
+      : existingItem 
+        ? existingItem.quantity + quantity  // Sumar (comportamiento original)
+        : quantity;
 
     //Verificar si hay stock suficiente
-    if (totalQuantity > product.stock) {
+    if (finalQuantity > product.stock) {
       throw new BadRequestException(
         `Not enough stock. Available: ${product.stock}`,
       );
@@ -97,7 +100,7 @@ export class CartService {
       return this.prisma.cartItem.update({
         where: { id: existingItem.id },
         data: {
-          quantity: totalQuantity,
+          quantity: finalQuantity,
         },
       });
     }
@@ -107,7 +110,7 @@ export class CartService {
       data: {
         cartId: cart.id,
         productId,
-        quantity,
+        quantity: finalQuantity,
       },
     });
   }
