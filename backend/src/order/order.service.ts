@@ -63,8 +63,8 @@ export class OrderService {
           userId,
           status: 'PENDING',
           createdAt: {
-            gte: new Date(Date.now() - 5 * 60 * 1000) // 5 minutos
-          }
+            gte: new Date(Date.now() - 5 * 60 * 1000), // 5 minutos
+          },
         },
         include: {
           items: {
@@ -97,7 +97,9 @@ export class OrderService {
 
         // Si el total coincide, es la misma orden (idempotencia)
         if (Math.abs(recentOrder.total - cartTotal) < 0.01) {
-          this.logger.log(`Returning existing order #${recentOrder.id} for user ${userId}`);
+          this.logger.log(
+            `Returning existing order #${recentOrder.id} for user ${userId}`,
+          );
           return recentOrder;
         }
       }
@@ -161,7 +163,10 @@ export class OrderService {
     });
   }
 
-  private async sendOrderConfirmationEmail(order: OrderWithRelations, idempotencyKey?: string) {
+  private async sendOrderConfirmationEmail(
+    order: OrderWithRelations,
+    idempotencyKey?: string,
+  ) {
     try {
       // Preparar los datos para el email
       const emailData: OrderEmailData = {
@@ -175,30 +180,18 @@ export class OrderService {
         })),
       };
 
-<<<<<<< HEAD
-      // Enviar email de forma no bloqueante
       // Generar idempotency key si no se proporciona
-      const emailIdempotencyKey = idempotencyKey || `order-confirmation-${order.id}`;
+      const emailIdempotencyKey =
+        idempotencyKey || `order-confirmation-${order.id}`;
 
       // Enviar email de forma no bloqueante con idempotencia
-      this.emailService.sendOrderConfirmationEmail(
-        order.user.email,
-        emailData,
-        emailIdempotencyKey
-      )
-        .then(success => {
-=======
-      // Generar idempotency key si no se proporciona
-      const emailIdempotencyKey = idempotencyKey || `order-confirmation-${order.id}`;
-
-      // Enviar email de forma no bloqueante con idempotencia
-      this.emailService.sendOrderConfirmationEmail(
-        order.user.email,
-        emailData,
-        emailIdempotencyKey
-      )
-        .then(success => {
->>>>>>> origin/github_prod
+      this.emailService
+        .sendOrderConfirmationEmail(
+          order.user.email,
+          emailData,
+          emailIdempotencyKey,
+        )
+        .then((success) => {
           if (success) {
             this.logger.log(
               `Order confirmation email sent for order #${order.id}`,
@@ -292,17 +285,19 @@ export class OrderService {
     });
 
     // Generar idempotency key si no se proporciona
-    const emailIdempotencyKey = idempotencyKey || `order-status-${orderId}-${newStatus}`;
+    const emailIdempotencyKey =
+      idempotencyKey || `order-status-${orderId}-${newStatus}`;
 
     // Enviar email de actualización de estado (no bloqueante) con idempotencia
-    this.emailService.sendOrderStatusUpdateEmail(
-      order.user.email,
-      order.user.name ?? 'Cliente',
-      orderId,
-      newStatus,
-      emailIdempotencyKey
-    )
-      .then(success => {
+    this.emailService
+      .sendOrderStatusUpdateEmail(
+        order.user.email,
+        order.user.name ?? 'Cliente',
+        orderId,
+        newStatus,
+        emailIdempotencyKey,
+      )
+      .then((success) => {
         if (success) {
           this.logger.log(
             `Order status update email sent for order #${orderId}`,
