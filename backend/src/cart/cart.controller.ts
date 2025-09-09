@@ -28,9 +28,9 @@ export class CartController {
   }
 
   @Post('add')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Add item to cart',
-    description: 'Add item to cart. Use replace=true for idempotent behavior.'
+    description: 'Add item to cart. Use replace=true for idempotent behavior.',
   })
   @ApiQuery({
     name: 'replace',
@@ -39,9 +39,9 @@ export class CartController {
     type: Boolean,
   })
   addToCart(
-    @CurrentUser() user: { id: number }, 
+    @CurrentUser() user: { id: number },
     @Body() dto: addToCartDto,
-    @Query('replace') replace?: string
+    @Query('replace') replace?: string,
   ) {
     const replaceMode = replace === 'true';
     return this.cartService.addToCart(user.id, dto, replaceMode);

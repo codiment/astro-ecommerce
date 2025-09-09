@@ -156,14 +156,14 @@ export class OrderService {
       });
 
       // 6- Enviar email de confirmación (fuera de la transacción)
-      void this.sendOrderConfirmationEmail(order);
+      void this.sendOrderConfirmationEmail(order, idempotencyKey);
 
       this.logger.log(`New order #${order.id} created for user ${userId}`);
       return order;
     });
   }
 
-  private async sendOrderConfirmationEmail(
+  private sendOrderConfirmationEmail(
     order: OrderWithRelations,
     idempotencyKey?: string,
   ) {

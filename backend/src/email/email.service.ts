@@ -81,7 +81,9 @@ export class EmailService {
       }
       return false;
     } catch (error) {
-      this.logger.error('Error checking email log:', error);
+      this.logger.error(
+        `Error checking email log: ${(error as Error)?.message || 'Unknown error'}`,
+      );
       return false;
     }
   }
@@ -105,7 +107,9 @@ export class EmailService {
       });
       this.logger.log(`Email logged: ${emailType} to ${recipient}`);
     } catch (error) {
-      this.logger.error('Error logging email:', error);
+      this.logger.error(
+        `Error logging email: ${(error as Error)?.message || 'Unknown error'}`,
+      );
     }
   }
 
@@ -238,7 +242,7 @@ export class EmailService {
       );
       return true;
     }
-    const statusMessages = {
+    const statusMessages: Record<string, string> = {
       PAID: 'Tu pedido ha sido pagado exitosamente',
       CANCELLED: 'Tu pedido ha sido cancelado',
       SHIPPED: 'Tu pedido ha sido enviado',

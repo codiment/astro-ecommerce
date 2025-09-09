@@ -12,7 +12,12 @@ import {
 } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { JwtAuthGuard } from 'src/auth/jwt.auth.guard';
-import { ApiBearerAuth, ApiOperation, ApiParam, ApiHeader } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiParam,
+  ApiHeader,
+} from '@nestjs/swagger';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 
@@ -28,9 +33,10 @@ export class OrderController {
   }
 
   @Post()
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Create a new order',
-    description: 'Creates a new order from the user\'s cart. Supports idempotency via header.'
+    description:
+      "Creates a new order from the user's cart. Supports idempotency via header.",
   })
   @ApiHeader({
     name: 'Idempotency-Key',
@@ -39,7 +45,7 @@ export class OrderController {
   })
   createOrder(
     @CurrentUser() user: { id: number },
-    @Headers('idempotency-key') idempotencyKey?: string
+    @Headers('idempotency-key') idempotencyKey?: string,
   ) {
     return this.orderService.createOrder(user.id, idempotencyKey);
   }

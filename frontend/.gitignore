@@ -24,3 +24,6 @@ pnpm-debug.log*
 
 # Cloudflare Wrangler
 .wrangler/
+
+# Example
+.env.example

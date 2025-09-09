@@ -82,10 +82,10 @@ export class CartService {
     });
 
     // ✅ LÓGICA IDEMPOTENTE
-    const finalQuantity = replace 
-      ? quantity  // Establecer cantidad exacta (idempotente)
-      : existingItem 
-        ? existingItem.quantity + quantity  // Sumar (comportamiento original)
+    const finalQuantity = replace
+      ? quantity // Establecer cantidad exacta (idempotente)
+      : existingItem
+        ? existingItem.quantity + quantity // Sumar (comportamiento original)
         : quantity;
 
     //Verificar si hay stock suficiente
